@@ -1,50 +1,48 @@
-# Hệ Thống Thư Viện Tài Liệu Môn Học
+# Hệ Thống Thư Viện Tài Liệu Môn Học (Document Library)
 
-Tài liệu này giải thích toàn bộ hoạt động và logic của hệ thống. 
+Hệ thống quản lý tài liệu phân tán được xây dựng bằng ngôn ngữ Java, tích hợp đa giao thức mạng (TCP, UDP, RMI) để tối ưu hóa hiệu suất và tính năng.
 
-## 1. Kiến Trúc Tổng Quan
-Hệ thống chia làm 2 phần: Máy khách (Client) và Máy chủ (Server).
-Khi bạn chạy file `client_ui.java`, một luồng ngầm sẽ tự động gọi `chay_may_chu.java` để bật server. 
-Sau đó Client sẽ giao tiếp với Server qua 3 giao thức: TCP (Port 8888), UDP (Port 9999), và RMI (Port 1099).
-
----
-
-## 2. Logic Xử Lý Của Từng Giao Thức
-
-### a. Giao thức TCP (Dùng cho Tải lên, Tải xuống, Tìm kiếm)
-- **Mục tiêu:** Xử lý các thao tác chính liên quan đến file.
-- **Hoạt động tại Máy Khách (`ket_noi_tcp.java`):** 
-  - Khi bạn bấm "Tải lên", cửa sổ chọn file hiện ra. Hệ thống sẽ copy file bạn chọn vào thư mục `src/luutru/upload`. Sau đó gửi lệnh `tailen|tenfile` cho Server.
-  - Khi bạn bấm "Tải xuống", nó gửi lệnh `taixuong|tenfile`.
-  - Khi bạn bấm "Tìm kiếm", nó gửi lệnh `timkiem|tukhoa`.
-- **Hoạt động tại Máy Chủ (`may_chu_tcp.java`):**
-  - Nghe trên cổng 8888. Nếu nhận được `timkiem`, nó sẽ vào thư mục `upload` để tìm file có tên chứa từ khóa.
-  - Nếu nhận được `tailen`, nó xác nhận file đã nằm ở thư mục `upload`, sau đó nó TỰ ĐỘNG gọi hàm của `may_chu_udp` để phát thông báo có file mới.
-  - Nếu nhận được `taixuong`, nó kiểm tra xem file có trong `upload` không. Nếu có, nó giả lập việc tải xuống bằng cách tạo ra một file trong `src/luutru/download` và gọi sang `dich_vu_rmi` để tăng biến đếm lượt tải lên 1.
-
-### b. Giao thức UDP (Dùng để cập nhật nhanh danh sách)
-- **Mục tiêu:** Broadcast (phát sóng) thông báo cho mọi người đang online.
-- **Hoạt động tại Máy Chủ (`may_chu_udp.java`):**
-  - Được `may_chu_tcp` gọi khi có tài liệu vừa tải lên xong. Nó sẽ đóng gói tên file đó thành mảng byte và gửi ra toàn mạng (địa chỉ broadcast 255.255.255.255) qua cổng 9999.
-- **Hoạt động tại Máy Khách (`nhan_udp.java`):**
-  - Khi giao diện vừa mở, luồng `nhan_udp` luôn luôn chạy ngầm, liên tục nghe trên cổng 9999.
-  - Khi bắt được gói tin từ server bay tới, nó dùng `SwingUtilities.invokeLater` để an toàn in dòng chữ "có tài liệu mới" lên màn hình giao diện mà không làm treo ứng dụng.
-
-### c. Giao thức RMI (Dùng để quản trị hệ thống từ xa)
-- **Mục tiêu:** Gọi hàm thẳng vào bộ nhớ của Server để quản lý danh mục, tag, thống kê.
-- **Hoạt động tại Máy Chủ (`dich_vu_rmi_impl.java`):**
-  - Duy trì 2 danh sách `ArrayList` để lưu danh mục và tag trong RAM, cùng 1 biến `integer` để đếm tổng số lượt tải.
-  - Cung cấp sẵn các hàm `quanly_danhmuc`, `quanly_tag`, và `thongke_luottai` tại cổng 1099.
-- **Hoạt động tại Máy Khách (`goi_rmi.java`):**
-  - Không cần gửi String lệnh phức tạp như TCP. Nó chỉ cần dùng `LocateRegistry` để tìm dịch vụ trên cổng 1099.
-  - Sau đó gọi thẳng vào hàm của Server ví dụ `dichvu.thongke_luottai()`, kết quả Server sẽ tính toán trong RAM và trả về nguyên một chuỗi cho giao diện hiển thị.
+## 1. Tính Năng Nổi Bật
+- **Hỗ trợ đa định dạng**: Truyền tải thực tế các file nhị phân như PDF, PowerPoint, Excel, Word, EXE... qua mạng.
+- **Giao diện Tiếng Việt**: UI thân thiện, hỗ trợ đầy đủ ký tự tiếng Việt có dấu và ký tự đặc biệt.
+- **Tab Hiển Thị Thông Minh**: Tích hợp tất cả các chức năng (Tìm kiếm, Tải lên, Tải xuống, Làm mới) tại một màn hình duy nhất.
+- **Cơ chế Byte Streaming**: Sử dụng kỹ thuật băm file thành các mảng byte (chunks) để truyền tải ổn định, không gây tràn bộ nhớ RAM.
 
 ---
 
-## 3. Tóm Tắt Quy Trình Tích Hợp
-Chỉ với 1 hành động "Tải file xuống":
-1. **TCP** xử lý việc bắn file về thư mục `download`.
-2. TCP bên Server ngầm gọi sang **RMI** để báo "có người mới tải xong rồi đó, cộng thêm 1 lượt tải vào nhé".
-3. Từ đó khi bạn sang tab **RMI** bấm xem thống kê, bạn sẽ thấy số lượt tải đã được cộng lên.
+## 2. Kiến Trúc Kỹ Thuật
+Dự án bao gồm 2 thành phần chính: **Máy chủ (Server)** và **Máy khách (Client)**.
 
-Tất cả được thiết kế rất logic, phân chia nhiệm vụ rõ ràng và tách biệt từng file rất gọn gàng.
+### a. Giao thức TCP (Port 8888)
+- **Truyền tải file thực tế**: Sử dụng `DataInputStream` và `DataOutputStream` để gửi/nhận dữ liệu byte.
+- **Logic**:
+  - **Tải lên**: Client băm file thành các gói 4KB và gửi qua socket. Server hứng dữ liệu và lắp ráp lại tại `src/luutru/upload/`.
+  - **Tải xuống**: Server đọc file nhị phân và đẩy ngược về cho Client lưu vào `src/luutru/download/`.
+  - **Tìm kiếm**: Tìm kiếm file theo tên trong kho lưu trữ của Server.
+
+### b. Giao thức UDP (Port 9999)
+- **Thông báo thời gian thực**: Khi có người dùng tải lên tài liệu mới, Server sẽ thực hiện **Broadcast** thông báo đến toàn bộ các máy khách đang online.
+- **Hoạt động**: Luồng `nhan_udp` chạy ngầm ở Client sẽ liên tục lắng nghe và hiển thị thông báo ngay lập tức khi có tài liệu mới xuất hiện.
+
+### c. Giao thức RMI (Port 1099)
+- **Quản trị hệ thống**: Sử dụng phương thức gọi hàm từ xa (Remote Method Invocation) để quản lý các đối tượng trong RAM của Server.
+- **Chức năng**: Quản lý danh mục tài liệu, gắn tag tìm kiếm và thống kê tổng lượt tải về trên toàn hệ thống.
+
+---
+
+## 3. Cấu Trúc Thư Mục
+- `src/may_chu/`: Chứa mã nguồn khởi tạo và xử lý logic của Server.
+- `src/client_ui/`: Giao diện chính và các lớp xử lý kết nối mạng của Client.
+- `src/chucnang/`: Các bộ công cụ hỗ trợ như `truyen_tai_file.java` và giao diện phụ.
+- `src/luutru/`: Nơi lưu trữ tài liệu (chia làm thư mục `upload` và `download`).
+
+---
+
+## 4. Hướng Dẫn Sử Dụng
+1. **Khởi chạy**: Chỉ cần chạy file `src/client_ui/client_ui.java`. Hệ thống sẽ tự động kích hoạt Server chạy ngầm.
+2. **Tải lên**: Tại tab **Hiển thị**, chọn nút **Tải lên** và chọn file PDF/Excel bất kỳ từ máy tính của bạn.
+3. **Tải xuống**: Chọn file từ danh sách hoặc bấm **Tải xuống**, file sẽ được lưu vào thư mục `src/luutru/download/`.
+4. **Quản trị**: Sử dụng tab **Chức năng RMI** để thêm danh mục hoặc xem thống kê lượt tải.
+
+---
+*Dự án được phát triển bởi Nhóm 7 - Hệ thống phân tán.*
