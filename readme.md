@@ -42,7 +42,7 @@ Dự án bao gồm 2 thành phần chính: **Máy chủ (Server)** và **Máy kh
 
 ### A. Thiết lập Máy chủ (Server) bằng Docker
 Hệ thống Server hiện tại được thiết kế để chạy độc lập và ổn định 24/24 qua Docker.
-1. **Mở file `.env`** ở thư mục gốc và cấu hình IP của máy tính sẽ chạy Server (Ví dụ: `RMI_HOSTNAME=192.168.1.5`).
+1. **Mở file `.env`** ở thư mục gốc và cấu hình IP của máy tính sẽ chạy Server. Nếu chạy ở mạng LAN nội bộ, điền IP Wi-Fi (Vd: `192.168.1.5`). Nếu dùng mạng ảo Radmin VPN để kết nối qua Internet, hãy điền IP Radmin của máy chủ (Vd: `26.18.244.131`).
 2. **Khởi chạy Server**: Mở Terminal/CMD tại thư mục dự án và chạy lệnh:
    ```bash
    docker-compose up -d --build
@@ -55,6 +55,14 @@ Hệ thống Server hiện tại được thiết kế để chạy độc lập
 3. **Tải lên**: Tại tab **Hiển thị**, chọn nút **Tải lên**, chọn tài liệu và điền danh mục, tag (hỗ trợ gợi ý tag tự động).
 4. **Tải xuống**: Chọn file từ danh sách hoặc bấm **Tải xuống**, file sẽ được lưu vào thư mục `src/luutru/download/`.
 5. **Quản trị**: Sử dụng tab **Chức năng RMI** để thêm danh mục hoặc xem thống kê lượt tải.
+
+### C. Kết nối từ xa qua Internet (Khuyên dùng Radmin VPN / ZeroTier)
+Để các máy tính ở xa (khác mạng Wi-Fi, ví dụ mang lên trường học) vẫn kết nối được về máy chủ ở nhà:
+1. Cài đặt **Radmin VPN** trên cả máy chủ (chạy Docker) và máy khách (Client).
+2. Tạo một Network trên Radmin VPN và cho các máy kết nối vào chung.
+3. Radmin VPN sẽ cấp cho máy chủ một địa chỉ IP ảo (Ví dụ: `26.18.244.131`).
+4. Tại máy chủ, điền IP này vào file `.env` (`RMI_HOSTNAME=26.18.244.131`) và chạy lại Docker.
+5. Tại máy khách, mở App lên và điền đúng IP `26.18.244.131` đó, hệ thống sẽ kết nối thành công bất chấp khoảng cách địa lý.
 
 ---
 *Dự án được phát triển bởi Nhóm 7 - Hệ thống phân tán.*
