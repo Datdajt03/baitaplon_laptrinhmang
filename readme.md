@@ -30,11 +30,27 @@ Dự án bao gồm 2 thành phần chính: **Máy chủ (Server)** và **Máy kh
 
 ---
 
-## 3. Cấu Trúc Thư Mục
-- `src/may_chu/`: Chứa mã nguồn khởi tạo và xử lý logic của Server.
-- `src/client_ui/`: Giao diện chính và các lớp xử lý kết nối mạng của Client.
-- `src/chucnang/`: Các bộ công cụ hỗ trợ như `truyen_tai_file.java` và giao diện phụ.
-- `src/luutru/`: Nơi lưu trữ tài liệu (chia làm thư mục `upload` và `download`).
+## 3. Cấu Trúc Thư Mục & Phân Chia Trách Nhiệm
+Hệ thống được thiết kế theo mô hình Client - Server và tách biệt rõ ràng các thành phần chức năng:
+
+- **`src/may_chu/` (Server - Xử lý lõi)**: 
+  - `chay_may_chu.java`: Khởi động toàn bộ các dịch vụ (RMI, TCP, UDP) và thiết lập môi trường (tự động tạo thư mục nếu chưa có).
+  - `may_chu_tcp.java`: Xử lý việc upload/download file bằng byte streaming theo port 8888. Phân luồng cho từng Client kết nối đồng thời.
+  - `may_chu_udp.java`: Đảm nhiệm việc phát Broadcast (Port 9999) ngay lập tức khi có tài liệu mới được tải lên để báo cho các máy khác.
+  - `dich_vu_rmi_impl.java`: Thực thi các lệnh quản lý danh mục, tag và thống kê hệ thống trên máy chủ (Port 1099).
+
+- **`src/client_ui/` (Client - Giao diện & Kết nối)**: 
+  - `client_ui.java`: Cửa sổ giao diện chính của người dùng (vẽ bằng Java Swing). Xử lý các sự kiện click chuột và hiển thị.
+  - `ket_noi_tcp.java`, `nhan_udp.java`, `goi_rmi.java`: Bộ 3 file "cầu nối" để Client giao tiếp với Server qua 3 giao thức tương ứng.
+  - `CauHinh.java`: Lưu cấu hình địa chỉ IP động của Server (để kết nối từ xa).
+
+- **`src/chucnang/` & `src/chucnang2/` (Các module tiện ích mở rộng)**:
+  - Chứa `truyen_tai_file.java`: Công cụ chuyên dụng để băm nhỏ file (chunking) thành nhiều mảng byte và truyền đi an toàn.
+  - Chứa `GiaoDienChonTag.java`: Cửa sổ popup (dialog) cho phép người dùng chọn danh mục, tự nhập hoặc bấm gợi ý tag trước khi tải tài liệu lên.
+
+- **`src/luutru/` (Kho dữ liệu vật lý)**:
+  - `upload/`: Thư mục nằm trên Server, lưu giữ tất cả các tài liệu mà toàn bộ hệ thống đã đóng góp.
+  - `download/`: Thư mục nằm trên máy Client, đây là nơi chứa tài liệu sau khi người dùng chọn tải một file từ kho chung về máy cá nhân của mình.
 
 ---
 
