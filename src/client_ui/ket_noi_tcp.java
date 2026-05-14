@@ -12,7 +12,7 @@ public class ket_noi_tcp {
     // ham tim kiem tai lieu tren may chu
     public static void tim_kiem(String tukhoa, JTextArea hienthi) {
         try {
-            Socket mang = new Socket("localhost", 8888);
+            Socket mang = new Socket(CauHinh.SERVER_IP, 8888);
             DataOutputStream gui_di = new DataOutputStream(mang.getOutputStream());
             DataInputStream nhan_ve = new DataInputStream(mang.getInputStream());
             
@@ -32,7 +32,7 @@ public class ket_noi_tcp {
     // ham tim kiem tra ve mang de hien thi tren danh sach
     public static String[] tim_kiem_mang(String tukhoa) {
         try {
-            Socket mang = new Socket("localhost", 8888);
+            Socket mang = new Socket(CauHinh.SERVER_IP, 8888);
             DataOutputStream gui_di = new DataOutputStream(mang.getOutputStream());
             DataInputStream nhan_ve = new DataInputStream(mang.getInputStream());
             
@@ -56,7 +56,7 @@ public class ket_noi_tcp {
     // ham tai file len may chu
     public static void tai_len(File file_goc, JTextArea hienthi) {
         try {
-            Socket mang = new Socket("localhost", 8888);
+            Socket mang = new Socket(CauHinh.SERVER_IP, 8888);
             DataOutputStream gui_di = new DataOutputStream(mang.getOutputStream());
             DataInputStream nhan_ve = new DataInputStream(mang.getInputStream());
             
@@ -82,7 +82,7 @@ public class ket_noi_tcp {
     // ham tai file xuong
     public static void tai_xuong(String tenfile, JTextArea hienthi) {
         try {
-            Socket mang = new Socket("localhost", 8888);
+            Socket mang = new Socket(CauHinh.SERVER_IP, 8888);
             DataOutputStream gui_di = new DataOutputStream(mang.getOutputStream());
             DataInputStream nhan_ve = new DataInputStream(mang.getInputStream());
             

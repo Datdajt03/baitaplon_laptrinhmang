@@ -178,7 +178,7 @@ public class client_ui extends javax.swing.JFrame {
         chon_file.setDialogTitle("chọn tài liệu để tải lên");
         if (chon_file.showOpenDialog(this) == javax.swing.JFileChooser.APPROVE_OPTION) {
             java.io.File file_da_chon = chon_file.getSelectedFile();
-            ket_noi_tcp.tai_len(file_da_chon, hienthi_tcp);
+            chucnang2.GiaoDienChonTag.hienThi(this, file_da_chon, hienthi_tcp);
         }
     }//GEN-LAST:event_nut_tailenActionPerformed
 
@@ -222,7 +222,7 @@ public class client_ui extends javax.swing.JFrame {
         chon_file.setDialogTitle("chọn tài liệu để tải lên");
         if (chon_file.showOpenDialog(this) == javax.swing.JFileChooser.APPROVE_OPTION) {
             java.io.File file_da_chon = chon_file.getSelectedFile();
-            ket_noi_tcp.tai_len(file_da_chon, hienthi_tailieu);
+            chucnang2.GiaoDienChonTag.hienThi(this, file_da_chon, hienthi_tailieu);
         }
     }
 
@@ -260,14 +260,19 @@ public class client_ui extends javax.swing.JFrame {
         }
         //</editor-fold>
         
-        // tu dong bat server ngam khi chay client
-        new Thread(() -> {
-            try {
-                may_chu.chay_may_chu.main(new String[]{});
-            } catch (Exception e) {
-                // server co the da dang chay, bo qua loi
-            }
-        }).start();
+        // Hỏi địa chỉ IP của server
+        String ip = javax.swing.JOptionPane.showInputDialog(null, 
+            "Nhập địa chỉ IP của Server (để trống nếu chạy trên máy này hoặc localhost):", 
+            "Cấu hình Kết Nối", 
+            javax.swing.JOptionPane.QUESTION_MESSAGE);
+            
+        if (ip != null && !ip.trim().isEmpty()) {
+            CauHinh.SERVER_IP = ip.trim();
+        } else {
+            CauHinh.SERVER_IP = "localhost";
+        }
+
+        // (Đã loại bỏ tính năng tự chạy server ngầm, server sẽ chạy bằng Docker)
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {

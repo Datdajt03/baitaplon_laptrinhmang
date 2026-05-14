@@ -39,10 +39,22 @@ Dự án bao gồm 2 thành phần chính: **Máy chủ (Server)** và **Máy kh
 ---
 
 ## 4. Hướng Dẫn Sử Dụng
-1. **Khởi chạy**: Chỉ cần chạy file `src/client_ui/client_ui.java`. Hệ thống sẽ tự động kích hoạt Server chạy ngầm.
-2. **Tải lên**: Tại tab **Hiển thị**, chọn nút **Tải lên** và chọn file PDF/Excel bất kỳ từ máy tính của bạn.
-3. **Tải xuống**: Chọn file từ danh sách hoặc bấm **Tải xuống**, file sẽ được lưu vào thư mục `src/luutru/download/`.
-4. **Quản trị**: Sử dụng tab **Chức năng RMI** để thêm danh mục hoặc xem thống kê lượt tải.
+
+### A. Thiết lập Máy chủ (Server) bằng Docker
+Hệ thống Server hiện tại được thiết kế để chạy độc lập và ổn định 24/24 qua Docker.
+1. **Mở file `.env`** ở thư mục gốc và cấu hình IP của máy tính sẽ chạy Server (Ví dụ: `RMI_HOSTNAME=192.168.1.5`).
+2. **Khởi chạy Server**: Mở Terminal/CMD tại thư mục dự án và chạy lệnh:
+   ```bash
+   docker-compose up -d --build
+   ```
+   *(Server sẽ tự động compile code và chạy ngầm ở port 8888, 1099, 9999).*
+
+### B. Sử dụng Máy khách (Client)
+1. **Khởi chạy**: Chạy file `src/client_ui/client_ui.java` trên bất kỳ máy tính nào cùng mạng LAN.
+2. **Kết nối**: Ngay khi mở app, một hộp thoại sẽ hiện lên yêu cầu nhập IP Server. Hãy nhập đúng IP bạn đã cấu hình ở bước trên (vd: `192.168.1.5`).
+3. **Tải lên**: Tại tab **Hiển thị**, chọn nút **Tải lên**, chọn tài liệu và điền danh mục, tag (hỗ trợ gợi ý tag tự động).
+4. **Tải xuống**: Chọn file từ danh sách hoặc bấm **Tải xuống**, file sẽ được lưu vào thư mục `src/luutru/download/`.
+5. **Quản trị**: Sử dụng tab **Chức năng RMI** để thêm danh mục hoặc xem thống kê lượt tải.
 
 ---
 *Dự án được phát triển bởi Nhóm 7 - Hệ thống phân tán.*
