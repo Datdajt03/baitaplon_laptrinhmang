@@ -1,0 +1,351 @@
+# Báo Cáo: Hệ Thống Thư Viện Tài Liệu Môn Học
+**Nhóm 7 — Lập Trình Mạng**
+
+---
+
+## 1. Tổng Quan Hệ Thống
+
+Hệ thống **Thư Viện Tài Liệu Môn Học** là ứng dụng phân tán Client–Server được viết bằng Java, cho phép nhiều người dùng chia sẻ và tải tài liệu học tập qua mạng. Hệ thống tích hợp đồng thời **3 giao thức mạng** (TCP, UDP, RMI) để tối ưu từng loại tác vụ khác nhau.
+
+---
+
+## 2. Cấu Trúc Thư Mục
+
+```
+Baitaplon_Nhom7/
+│
+├── src/                                  # Toàn bộ mã nguồn Java
+│   ├── may_chu/                          # Phía Server
+│   │   ├── chay_may_chu.java             # Entry point: khởi động toàn bộ hệ thống
+│   │   ├── MongoKetNoi.java              # Kết nối MongoDB (Singleton Pattern)
+│   │   ├── may_chu_tcp.java              # Xử lý upload/download/tìm kiếm qua TCP
+│   │   ├── may_chu_udp.java              # Phát broadcast thông báo qua UDP
+│   │   ├── dich_vu_rmi.java              # Interface RMI (định nghĩa các hàm từ xa)
+│   │   └── dich_vu_rmi_impl.java        # Cài đặt RMI: quản lý danh mục, tag, thống kê
+│   │
+│   ├── client_ui/                        # Phía Client
+│   │   ├── client_ui.java               # Giao diện chính (Java Swing)
+│   │   ├── client_ui.form               # File thiết kế giao diện NetBeans
+│   │   ├── CauHinh.java                 # Lưu địa chỉ IP máy chủ
+│   │   ├── ket_noi_tcp.java             # Gửi lệnh TCP lên Server
+│   │   ├── goi_rmi.java                 # Gọi các hàm RMI từ xa
+│   │   ├── nhan_udp.java                # Lắng nghe thông báo UDP
+│   │   └── WrapLayout.java              # Layout icon dạng lưới (File Explorer style)
+│   │
+│   ├── chucnang/                         # Module tiện ích
+│   │   ├── truyen_tai_file.java          # Byte streaming: chia/ghép file theo chunk 4KB
+│   │   └── giao_dien_phu.java           # Cửa sổ tìm kiếm & tải xuống
+│   │
+│   ├── chucnang2/                        # Module mở rộng
+│   │   └── GiaoDienChonTag.java          # Popup chọn danh mục + tag trước khi upload
+│   │
+│   ├── thongbao/                         # Module thông báo kết nối
+│   │   ├── KiemTraKetNoi.java            # Kiểm tra TCP socket tới Server (timeout 3s)
+│   │   └── HopThoaiThongBao.java        # Dialog hiển thị kết quả kết nối khi mở app
+│   │
+│   ├── resources/                        # Tài nguyên tĩnh
+│   │   └── icontl.png                    # Icon đại diện tài liệu (hiển thị trong UI)
+│   │
+│   └── luutru/                           # Kho lưu trữ file vật lý
+│       ├── upload/                       # Tài liệu do Client gửi lên (nằm trên Server)
+│       └── download/                     # Tài liệu Client đã tải về (nằm trên máy Client)
+│
+├── lib/                                  # Thư viện bên thứ 3
+│   ├── mongodb-driver-sync-4.11.1.jar
+│   ├── mongodb-driver-core-4.11.1.jar
+│   └── bson-4.11.1.jar
+│
+├── picture/                              # Ảnh gốc của dự án
+│   └── icontl.png
+│
+├── Dockerfile                            # Đóng gói Server vào Docker image
+├── docker-compose.yml                    # Orchestration: khởi động Server container
+├── .env                                  # Biến môi trường: IP Radmin, MongoDB URI
+├── build.xml                             # Ant build script (NetBeans)
+└── readme.md                             # Hướng dẫn sử dụng
+```
+
+---
+
+## 3. Kiến Trúc Kỹ Thuật & Cơ Chế Hoạt Động
+
+### 3.1 Luồng Khởi Động Server
+
+```
+chay_may_chu.main()
+    │
+    ├── 1. Tạo thư mục upload/ download/ nếu chưa có
+    ├── 2. MongoKetNoi.khoiDong()     → Kết nối MongoDB (timeout 5s nếu fail vẫn chạy tiếp)
+    ├── 3. RMI Registry (port 1099)   → Đăng ký dich_vu_rmi_impl
+    ├── 4. may_chu_tcp.start()        → Lắng nghe TCP (port 8888)
+    └── 5. ShutdownHook               → Đóng MongoDB sạch sẽ khi tắt Server
+```
+
+### 3.2 Giao Thức TCP — Port 8888 (Truyền File Thực Tế)
+
+**Đây là giao thức chủ lực** xử lý 3 tác vụ nặng nhất:
+
+#### Lệnh Upload (`tailen`)
+```
+Client gửi:  "tailen|BaiTap.pdf|4200000|Bài tập lớn|java, mang"
+                         │          │          │            │
+                      tên file   kích thước  danh mục    tags
+
+Server xử lý:
+  ├── Kiểm tra kích thước > 100MB → từ chối ngay (bảo vệ ổ đĩa)
+  ├── Nhận byte streaming → lắp ghép → lưu vào src/luutru/upload/BaiTap.pdf
+  ├── Ghi metadata vào MongoDB:
+  │     { ten_file, kich_thuoc, danh_muc, tags, luot_tai:0, ip_nguoi_gui, ngay_upload }
+  └── Phát UDP broadcast → thông báo cho tất cả Client đang online
+```
+
+#### Lệnh Download (`taixuong`)
+```
+Client gửi:  "taixuong|BaiTap.pdf"
+
+Server xử lý:
+  ├── Kiểm tra file tồn tại trên ổ đĩa
+  ├── Gửi: "ok|4200000"  (báo kích thước để Client chuẩn bị bộ nhớ)
+  ├── Đọc file → đẩy byte streaming theo chunk 4KB
+  └── MongoDB: tăng luot_tai của file đó lên +1
+```
+
+#### Lệnh Tìm Kiếm (`timkiem`)
+```
+Client gửi:  "timkiem|java"
+
+Server xử lý:
+  └── Query MongoDB: tìm tất cả document có ten_file chứa "java"
+      → Trả về: "BaiTapJava.pdf;;LyThuyetJava.docx;;"
+```
+
+### 3.3 Cơ Chế Byte Streaming — Bí Quyết Giữ Nguyên Định Dạng File
+
+> **Đây là cơ chế quan trọng nhất**, giải thích vì sao file PDF, DOCX, PNG, EXE... đều được truyền đi hoàn hảo, không bị hỏng.
+
+**Bản chất:** Mọi file máy tính đều chỉ là một chuỗi byte số (0 và 1). Hệ thống **không hiểu và không chỉnh sửa nội dung** — chỉ đơn giản copy nguyên xi chuỗi byte đó qua mạng.
+
+```
+[Server đọc file]                      [Client ghi file]
+                    ← mạng TCP →
+FileInputStream                        FileOutputStream
+  │                                          │
+  ├── Đọc 4096 byte (chunk 1)  ──────►  Ghi 4096 byte
+  ├── Đọc 4096 byte (chunk 2)  ──────►  Ghi 4096 byte
+  ├── ...                               ...
+  └── Đọc 512 byte  (chunk N)  ──────►  Ghi 512 byte
+                                              │
+                                         File hoàn chỉnh
+                                         = 100% giống gốc
+```
+
+**Tại sao chunk 4KB?** Nếu đọc cả file vào RAM một lần (ví dụ file 1GB) → tràn bộ nhớ. Chia nhỏ 4KB → RAM luôn chỉ dùng vài KB, truyền file vô hạn kích thước.
+
+### 3.4 Giao Thức UDP — Port 9999 (Thông Báo Realtime)
+
+> **UDP là giao thức "bắn và quên"** — không đảm bảo đến nơi, nhưng cực kỳ nhanh. Phù hợp với thông báo realtime.
+
+```
+Khi có file mới upload:
+  Server → Broadcast UDP đến 255.255.255.255:9999
+                    │
+          (gửi đến TẤT CẢ thiết bị trong mạng)
+                    │
+       ┌────────────┴────────────┐
+    Client A                  Client B
+  Luồng nhan_udp            Luồng nhan_udp
+  (chạy ngầm 24/7)          (chạy ngầm 24/7)
+       │                         │
+  Hiện thông báo:           Hiện thông báo:
+  "Có tài liệu mới: BaiTap.pdf"
+```
+
+**Tại sao không dùng TCP cho thông báo?** TCP cần thiết lập kết nối riêng với từng Client (handshake 3 bước). UDP broadcast chỉ cần 1 gói tin → đến tất cả mọi người cùng lúc.
+
+### 3.5 Giao Thức RMI — Port 1099 (Quản Trị Từ Xa)
+
+> **RMI (Remote Method Invocation)** cho phép Client gọi hàm Java trên Server như thể gọi hàm bình thường trong cùng một chương trình.
+
+```java
+// Client gọi (trong goi_rmi.java):
+dich_vu_rmi dichvu = registry.lookup("dichvurmi");
+String kq = dichvu.thongke_luottai();  // ← Hàm này chạy trên SERVER!
+
+// Server thực thi (dich_vu_rmi_impl.java):
+public String thongke_luottai() throws RemoteException {
+    // Query MongoDB → trả kết quả về cho Client
+    return "Tổng lượt tải: 150 lượt";
+}
+```
+
+**Chức năng RMI trong hệ thống:**
+- Thêm danh mục tài liệu mới
+- Thêm tag tìm kiếm
+- Thống kê tổng lượt tải theo từng file (từ MongoDB)
+
+### 3.6 MongoDB — Lưu Trữ Metadata Vĩnh Viễn
+
+> **Vấn đề trước khi có MongoDB:** Server lưu danh mục, tag, lượt tải trên RAM → tắt Server là mất sạch.
+>
+> **Giải pháp:** MongoDB lưu vĩnh viễn trên ổ cứng, Server tắt rồi bật lại dữ liệu vẫn còn đầy đủ.
+
+**Phân chia nhiệm vụ:**
+
+| Lưu ở đâu | Lưu cái gì | Lý do |
+|---|---|---|
+| Ổ cứng Server (`upload/`) | File vật lý (PDF, DOCX...) | File nặng, không nên nhét vào DB |
+| MongoDB collection `tai_lieu` | Metadata của file | Tìm kiếm nhanh, thống kê dễ |
+| MongoDB collection `danh_muc` | Danh sách danh mục | Vĩnh viễn, không mất khi restart |
+| MongoDB collection `tag` | Danh sách tag gợi ý | Vĩnh viễn, không mất khi restart |
+
+**Cấu trúc document MongoDB khi upload file:**
+```json
+{
+  "_id": "ObjectId(...)",
+  "ten_file": "BaiTapLon_Nhom7.pdf",
+  "kich_thuoc": 4200000,
+  "danh_muc": "Bài tập lớn",
+  "tags": ["java", "mang", "rmi"],
+  "luot_tai": 42,
+  "ip_nguoi_gui": "26.18.244.135",
+  "ngay_upload": "Mon May 19 16:45:00 ICT 2026"
+}
+```
+
+### 3.7 Hệ Thống Giới Hạn 100MB
+
+**Kiểm tra 2 lớp** để bảo vệ cả Client lẫn Server:
+
+```
+Người dùng chọn file 150MB
+          │
+     [Lớp 1 - Client] ket_noi_tcp.java
+     150MB > 100MB → Popup cảnh báo ngay
+     → DỪNG, không gửi 1 byte nào
+          │
+     (Nếu bypass lớp 1)
+          │
+     [Lớp 2 - Server] may_chu_tcp.java
+     Đọc dungluong từ header lệnh
+     150MB > 100MB → Gửi thông báo lỗi → Đóng socket
+```
+
+### 3.8 Kết Nối Từ Xa qua Radmin VPN
+
+> **Radmin VPN** tạo một mạng LAN ảo qua Internet. Các máy tính ở khác địa điểm (nhà, trường...) nhìn nhau như thể cắm chung một dây mạng.
+
+```
+[Nhà - Máy Chủ]                    [Trường - Máy Client]
+  Docker Server                        NetBeans Client
+  Radmin IP: 26.18.244.131             Radmin IP: 26.18.244.135
+       │                                     │
+       └──────── Radmin VPN Tunnel ──────────┘
+                  (Internet)
+                  
+Cấu hình:
+  .env → RMI_HOSTNAME=26.18.244.131
+  Client nhập IP: 26.18.244.131 khi mở app
+```
+
+**Luồng kết nối:**
+1. Máy chủ bật Radmin VPN → nhận IP ảo (vd: `26.18.244.131`)
+2. Điền IP đó vào file `.env` → chạy `docker-compose up -d --build`
+3. Máy Client mở app → nhập `26.18.244.131` → kết nối thành công
+
+### 3.9 Module Thông Báo Kết Nối (package `thongbao`)
+
+> Khi Client mở app, hệ thống tự động kiểm tra xem Server có sẵn sàng không trước khi vào giao diện chính.
+
+```
+Người dùng nhập IP → KiemTraKetNoi.kiemTra(ip, 8888)
+                            │
+                    Thử mở TCP socket
+                    (timeout 3 giây)
+                            │
+              ┌─────────────┴─────────────┐
+           Thành công                   Thất bại
+     HopThoaiThongBao               HopThoaiThongBao
+     [✓ Nền xanh]                   [✗ Nền đỏ]
+     "Kết nối thành công!"          "Không thể kết nối"
+     (tự đóng sau 3 giây)          + gợi ý kiểm tra Radmin
+```
+
+---
+
+## 4. Deployment bằng Docker
+
+**Lý do dùng Docker:**
+- Server chạy 24/7 ổn định, không cần mở NetBeans
+- Cô lập môi trường → không lo xung đột Java version
+- Chỉ cần 1 lệnh để deploy
+
+**Biến môi trường trong `.env`:**
+
+| Biến | Giá trị | Ý nghĩa |
+|---|---|---|
+| `RMI_HOSTNAME` | `26.18.244.131` | IP Radmin VPN của máy chủ |
+| `MONGODB_URI` | `mongodb://emr:123456@host.docker.internal:27020/...` | Kết nối tới MongoDB trên máy thật |
+
+> **Lưu ý quan trọng:** Trong Docker container chạy trên Linux, `localhost` = chính container (không phải máy thật). Phải dùng `host.docker.internal` để truy cập dịch vụ trên máy thật (ở đây là MongoDB port 27020).
+
+**Lệnh deploy:**
+```bash
+docker-compose up -d --build
+```
+
+**Kiểm tra log Server:**
+```bash
+docker logs server_thuvien
+```
+
+**Log khi khởi động thành công:**
+```
+[MongoDB] Ket noi thanh cong -> database: thuvien_db
+[RMI] May chu RMI dang chay o cong 1099...
+[HE THONG] May chu san sang! TCP:8888 | RMI:1099 | UDP:9999
+[TCP] May chu TCP dang chay o cong 8888
+```
+
+---
+
+## 5. Hướng Dẫn Sử Dụng
+
+### Phía Máy Chủ
+```bash
+# 1. Cấu hình .env
+RMI_HOSTNAME=<Radmin VPN IP của máy chủ>
+MONGODB_URI=mongodb://emr:123456@host.docker.internal:27020/?authSource=admin
+
+# 2. Khởi động
+docker-compose up -d --build
+```
+
+### Phía Máy Client
+1. Mở project bằng NetBeans → **Clean and Build**
+2. Chạy `client_ui.java`
+3. Nhập IP Radmin VPN của máy chủ (vd: `26.18.244.131`)
+4. Hộp thoại xanh = kết nối thành công → vào app
+5. Tab **Hiển thị**: xem danh sách tài liệu dạng icon
+6. Nút **Tải Lên**: chọn file → chọn danh mục + tag → xác nhận
+7. Nút **Tải Xuống**: chọn file từ danh sách → file lưu vào `src/luutru/download/`
+
+---
+
+## 6. Các Công Nghệ Sử Dụng
+
+| Công nghệ | Phiên bản | Mục đích |
+|---|---|---|
+| Java | 8 (JDK 8) | Ngôn ngữ lập trình chính |
+| Java Swing | - | Giao diện đồ họa Client |
+| TCP Socket | - | Truyền file, tìm kiếm |
+| UDP Datagram | - | Broadcast thông báo realtime |
+| Java RMI | - | Quản trị từ xa |
+| MongoDB | 8.0 | Lưu trữ metadata tài liệu |
+| MongoDB Driver | 4.11.1 | Kết nối Java ↔ MongoDB |
+| Docker | - | Container hóa Server |
+| Radmin VPN | - | Kết nối mạng từ xa |
+| Apache Ant | - | Build tool (NetBeans) |
+
+---
+
+*Báo cáo được tạo tự động — Nhóm 7, môn Lập Trình Mạng.*

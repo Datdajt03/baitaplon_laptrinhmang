@@ -4,109 +4,120 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.net.Socket;
+import javax.swing.JOptionPane;
 import javax.swing.JTextArea;
 
-// lop xu ly ket noi tcp voi may chu
+/**
+ * Lop xu ly ket noi TCP voi may chu.
+ *
+ * Giao thuc lenh (phan cach bang '|'):
+ *   timkiem | tukhoa
+ *   tailen  | tenfile | dungluong | danhmuc | tags
+ *   taixuong| tenfile
+ */
 public class ket_noi_tcp {
-    
-    // ham tim kiem tai lieu tren may chu
+
+    // Ham tim kiem - hien thi vao JTextArea
     public static void tim_kiem(String tukhoa, JTextArea hienthi) {
         try {
             Socket mang = new Socket(CauHinh.SERVER_IP, 8888);
-            DataOutputStream gui_di = new DataOutputStream(mang.getOutputStream());
-            DataInputStream nhan_ve = new DataInputStream(mang.getInputStream());
-            
-            // gui lenh tim kiem kem tu khoa
+            DataOutputStream gui_di  = new DataOutputStream(mang.getOutputStream());
+            DataInputStream  nhan_ve = new DataInputStream(mang.getInputStream());
+
             gui_di.writeUTF("timkiem|" + tukhoa);
-            
-            // nhan ket qua tra ve
             String ketqua = nhan_ve.readUTF();
-            hienthi.append("Kết quả tìm kiếm: " + ketqua + "\n");
-            
+            hienthi.append("Ket qua tim kiem: " + ketqua + "\n");
             mang.close();
         } catch (Exception loi) {
-            hienthi.append("Lỗi kết nối tcp: " + loi.getMessage() + "\n");
+            hienthi.append("Loi ket noi tcp: " + loi.getMessage() + "\n");
         }
     }
-    
-    // ham tim kiem tra ve mang de hien thi tren danh sach
+
+    // Ham tim kiem tra ve mang de hien thi tren danh sach UI
     public static String[] tim_kiem_mang(String tukhoa) {
         try {
             Socket mang = new Socket(CauHinh.SERVER_IP, 8888);
-            DataOutputStream gui_di = new DataOutputStream(mang.getOutputStream());
-            DataInputStream nhan_ve = new DataInputStream(mang.getInputStream());
-            
-            // gui lenh tim kiem
+            DataOutputStream gui_di  = new DataOutputStream(mang.getOutputStream());
+            DataInputStream  nhan_ve = new DataInputStream(mang.getInputStream());
+
             gui_di.writeUTF("timkiem|" + tukhoa);
-            
-            // nhan ket qua
             String ketqua = nhan_ve.readUTF();
             mang.close();
-            
+
             if (ketqua != null && !ketqua.equals("khong tim thay file") && !ketqua.isEmpty()) {
-                // may chu tra ve cac file cach nhau bang dau cham phay kep
                 return ketqua.split(";;");
             }
         } catch (Exception loi) {
-            System.out.println("lỗi kết nối tcp tìm kiếm: " + loi.getMessage());
+            System.out.println("Loi ket noi tcp tim kiem: " + loi.getMessage());
         }
         return new String[0];
     }
-    
-    // ham tai file len may chu
+
+    // Gioi han kich thuoc file toi da cho phep upload: 100 MB
+    private static final long GIOI_HAN_BYTES = 100L * 1024 * 1024; // 100 MB
+
+    // Ham tai file len may chu (co danh muc va tags)
     public static void tai_len(File file_goc, JTextArea hienthi) {
+        tai_len(file_goc, hienthi, "Khac", "");
+    }
+
+    // Ham tai file len may chu - day du thong tin danh muc va tags
+    public static void tai_len(File file_goc, JTextArea hienthi, String danhmuc, String tags) {
+        // Kiem tra kich thuoc file truoc khi gui
+        if (file_goc.length() > GIOI_HAN_BYTES) {
+            long mb = file_goc.length() / (1024 * 1024);
+            String thongbao = "File \"" + file_goc.getName() + "\" co dung luong " + mb
+                    + " MB, vuot qua gioi han 100 MB cho phep.\n"
+                    + "Vui long chon file nho hon.";
+            JOptionPane.showMessageDialog(null, thongbao, "File Qua Lon",
+                    JOptionPane.WARNING_MESSAGE);
+            hienthi.append("[LOI] File " + file_goc.getName() + " (" + mb + " MB) vuot gioi han 100 MB, huy tai len.\n");
+            return;
+        }
+
         try {
             Socket mang = new Socket(CauHinh.SERVER_IP, 8888);
-            DataOutputStream gui_di = new DataOutputStream(mang.getOutputStream());
-            DataInputStream nhan_ve = new DataInputStream(mang.getInputStream());
-            
-            String tenfile = file_goc.getName();
-            long dungluong = file_goc.length();
-            
-            // gui lenh tai len kem ten file va dung luong
-            gui_di.writeUTF("tailen|" + tenfile + "|" + dungluong);
-            
-            // truyen tai du lieu thuc te
+            DataOutputStream gui_di  = new DataOutputStream(mang.getOutputStream());
+            DataInputStream  nhan_ve = new DataInputStream(mang.getInputStream());
+
+            String tenfile   = file_goc.getName();
+            long   dungluong = file_goc.length();
+
+            // Lenh: tailen | tenfile | dungluong | danhmuc | tags
+            gui_di.writeUTF("tailen|" + tenfile + "|" + dungluong + "|" + danhmuc + "|" + tags);
+
+            // Truyen du lieu thuc te
             chucnang.truyen_tai_file.gui_file(gui_di, file_goc);
-            
-            // nhan ket qua
+
             String ketqua = nhan_ve.readUTF();
-            hienthi.append("Trạng thái tải lên: " + ketqua + "\n");
-            
+            hienthi.append("Trang thai tai len: " + ketqua + "\n");
             mang.close();
         } catch (Exception loi) {
-            hienthi.append("Lỗi tải lên: " + loi.getMessage() + "\n");
+            hienthi.append("Loi tai len: " + loi.getMessage() + "\n");
         }
     }
-    
-    // ham tai file xuong
+
+    // Ham tai file xuong
     public static void tai_xuong(String tenfile, JTextArea hienthi) {
         try {
             Socket mang = new Socket(CauHinh.SERVER_IP, 8888);
-            DataOutputStream gui_di = new DataOutputStream(mang.getOutputStream());
-            DataInputStream nhan_ve = new DataInputStream(mang.getInputStream());
-            
-            // gui lenh tai xuong kem ten file
+            DataOutputStream gui_di  = new DataOutputStream(mang.getOutputStream());
+            DataInputStream  nhan_ve = new DataInputStream(mang.getInputStream());
+
             gui_di.writeUTF("taixuong|" + tenfile);
-            
-            // nhan phan hoi tu server
             String phan_hoi = nhan_ve.readUTF();
-            
+
             if (phan_hoi.startsWith("ok|")) {
                 long dungluong = Long.parseLong(phan_hoi.split("\\|")[1]);
                 File file_dich = new File("src/luutru/download/" + tenfile);
-                
-                // hung du lieu file va ghi vao thu muc download
                 chucnang.truyen_tai_file.nhan_file(nhan_ve, file_dich, dungluong);
-                
-                hienthi.append("Tải xuống hoàn tất: " + tenfile + " (" + dungluong + " bytes)\n");
+                hienthi.append("Tai xuong hoan tat: " + tenfile + " (" + dungluong + " bytes)\n");
             } else {
-                hienthi.append("Lỗi tải xuống: " + phan_hoi + "\n");
+                hienthi.append("Loi tai xuong: " + phan_hoi + "\n");
             }
-            
             mang.close();
         } catch (Exception loi) {
-            hienthi.append("Lỗi tải xuống: " + loi.getMessage() + "\n");
+            hienthi.append("Loi tai xuong: " + loi.getMessage() + "\n");
         }
     }
 }

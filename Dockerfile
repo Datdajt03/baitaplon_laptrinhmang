@@ -1,26 +1,29 @@
-# Sử dụng base image OpenJDK 8
+# Su dung base image OpenJDK 8
 FROM eclipse-temurin:8-jdk
 
-# Cài đặt ant để biên dịch dự án
+# Cai dat ant de bien dich du an
 RUN apt-get update && apt-get install -y ant && rm -rf /var/lib/apt/lists/*
 
-# Thiết lập thư mục làm việc
+# Thiet lap thu muc lam viec
 WORKDIR /app
 
-# Copy toàn bộ mã nguồn vào container
+# Copy toan bo ma nguon vao container (bao gom thu muc lib chua MongoDB JARs)
 COPY . .
 
-# Cấp quyền và chạy ant để biên dịch
+# Cap quyen va chay ant de bien dich
 RUN ant compile
 
-# Môi trường IP cho RMI, mặc định là 127.0.0.1 (có thể truyền vào lúc chạy docker run -e RMI_HOSTNAME=IP_CUA_MAY_CHU)
+# Moi truong IP cho RMI
 ENV RMI_HOSTNAME="127.0.0.1"
 
-# Mở các cổng cần thiết:
-# 8888 cho TCP
-# 1099 cho RMI
-# 9999 cho UDP
+# Chuoi ket noi MongoDB
+# host.docker.internal = IP may that cua ban (duoc Docker tu dong map)
+# Vi MongoDB cua ban dang chay o port 27020 tren may that, khong cung Docker network
+ENV MONGODB_URI="mongodb://emr:123456@host.docker.internal:27020/?authSource=admin"
+
+# Mo cac cong can thiet
 EXPOSE 8888 1099 9999/udp
 
-# Chạy server với java, truyền cấu hình RMI Hostname để các client bên ngoài có thể kết nối RMI
-CMD ["sh", "-c", "java -Djava.rmi.server.hostname=$RMI_HOSTNAME -cp build/classes may_chu.chay_may_chu"]
+# Chay server voi java, truyen ca RMI Hostname va MongoDB URI
+CMD ["sh", "-c", "java -Djava.rmi.server.hostname=$RMI_HOSTNAME -cp build/classes:lib/mongodb-driver-sync-4.11.1.jar:lib/mongodb-driver-core-4.11.1.jar:lib/bson-4.11.1.jar may_chu.chay_may_chu"]
+

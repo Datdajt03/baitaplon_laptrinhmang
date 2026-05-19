@@ -68,13 +68,13 @@ public class GiaoDienChonTag extends JDialog {
             String danhmuc = cb_danhmuc.getSelectedItem().toString();
             String tag = txt_tag.getText();
             
-            // hien thi them thong tin tag/danh muc
-            hienthi.append("\nChuẩn bị tải lên: " + file.getName());
-            hienthi.append("\nDanh mục: " + danhmuc);
-            hienthi.append("\nTag: " + (tag.isEmpty() ? "Không có" : tag) + "\n");
-            
-            // goi tai len
-            ket_noi_tcp.tai_len(file_upload, hienthi);
+            // Hien thi thong tin tag/danh muc
+            hienthi.append("\nChuan bi tai len: " + file.getName());
+            hienthi.append("\nDanh muc: " + danhmuc);
+            hienthi.append("\nTag: " + (tag.isEmpty() ? "Khong co" : tag) + "\n");
+
+            // Goi tai len - truyen day du danh muc va tags vao lenh gui Server
+            ket_noi_tcp.tai_len(file_upload, hienthi, danhmuc, tag);
             dispose();
         });
         pn_bottom.add(btn_xacnhan);

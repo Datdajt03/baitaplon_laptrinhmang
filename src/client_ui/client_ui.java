@@ -4,29 +4,50 @@
  */
 package client_ui;
 
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
+import java.awt.*;
+import java.net.URL;
+import javax.swing.*;
 
 // lop chinh cua giao dien
 public class client_ui extends javax.swing.JFrame {
+
+    // Panel hien thi danh sach tai lieu dang icon
+    private JPanel pn_danhsach;
 
     /**
      * Creates new form client_ui
      */
     public client_ui() {
         initComponents();
-        
-        // thiet lap cua so
+
+        // 1. Dat icon cua so (thanh taskbar + goc trai cua so)
+        try {
+            URL urlIcon = getClass().getClassLoader().getResource("resources/icontl.png");
+            if (urlIcon != null) {
+                setIconImage(new ImageIcon(urlIcon).getImage());
+            }
+        } catch (Exception ignored) {}
+
+        // 2. Thay the hienthi_tailieu bang panel hien thi icon
+        pn_danhsach = new JPanel();
+        pn_danhsach.setLayout(new WrapLayout(FlowLayout.LEFT, 12, 12));
+        pn_danhsach.setBackground(Color.WHITE);
+        jScrollPane4.setViewportView(pn_danhsach);
+
+        // 3. Thiet lap cua so
         setLocationRelativeTo(null);
-        
-        // bat dau luong nhan udp
+
+        // 4. Bat dau luong nhan udp
         nhan_udp luong_udp = new nhan_udp(hienthi_udp);
         luong_udp.start();
-        
-        // hien thi mac dinh
+
+        // 5. Hien thi mac dinh
         hienthi_tcp.setText("ket qua hoat dong tcp hien o day...\n");
         hienthi_udp.setText("dang lang nghe thong bao tai lieu moi (udp)...\n");
         hienthi_rmi.setText("ket qua quan tri rmi hien o day...\n");
+
+        // 6. Tai danh sach tai lieu ngay khi mo
+        nut_lammoiActionPerformed(null);
     }
 
     /**
@@ -207,14 +228,76 @@ public class client_ui extends javax.swing.JFrame {
     }//GEN-LAST:event_nut_thongkeActionPerformed
 
     private void nut_lammoiActionPerformed(java.awt.event.ActionEvent evt) {
-        String[] danhsach = ket_noi_tcp.tim_kiem_mang("");
-        hienthi_tailieu.setText("Danh sách tài liệu hiện có:\n");
-        for (String tenfile : danhsach) {
-            hienthi_tailieu.append("- " + tenfile + "\n");
-        }
+        new Thread(() -> {
+            String[] danhsach = ket_noi_tcp.tim_kiem_mang("");
+            SwingUtilities.invokeLater(() -> hienThiDanhSachIcon(danhsach));
+        }).start();
+    }
+
+    // Hien thi danh sach tai lieu dang icon card voi hinh anh dai dien
+    private void hienThiDanhSachIcon(String[] danhsach) {
+        pn_danhsach.removeAll();
+
+        // Load icon tai lieu (icontl.png)
+        ImageIcon iconGoc = null;
+        try {
+            URL url = getClass().getClassLoader().getResource("resources/icontl.png");
+            if (url != null) {
+                Image img = new ImageIcon(url).getImage().getScaledInstance(64, 64, Image.SCALE_SMOOTH);
+                iconGoc = new ImageIcon(img);
+            }
+        } catch (Exception ignored) {}
+        final ImageIcon icon = iconGoc;
+
         if (danhsach.length == 0) {
-            hienthi_tailieu.append("Chưa có tài liệu nào.");
+            JLabel lbl = new JLabel("Chưa có tài liệu nào.", SwingConstants.CENTER);
+            lbl.setFont(new Font("Segoe UI", Font.ITALIC, 14));
+            lbl.setForeground(Color.GRAY);
+            pn_danhsach.add(lbl);
+        } else {
+            for (String tenfile : danhsach) {
+                // Moi file la 1 card: icon + ten file
+                JPanel card = new JPanel();
+                card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+                card.setBackground(new Color(248, 249, 252));
+                card.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                    javax.swing.BorderFactory.createLineBorder(new Color(220, 220, 230), 1, true),
+                    javax.swing.BorderFactory.createEmptyBorder(10, 14, 10, 14)
+                ));
+                card.setPreferredSize(new Dimension(120, 110));
+                card.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+                // Icon
+                JLabel lblIcon = new JLabel(icon != null ? icon : new ImageIcon());
+                lblIcon.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+                // Ten file (rut gon neu qua dai)
+                String hienThi = tenfile.length() > 14 ? tenfile.substring(0, 12) + "..." : tenfile;
+                JLabel lblTen = new JLabel(hienThi, SwingConstants.CENTER);
+                lblTen.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+                lblTen.setForeground(new Color(60, 60, 80));
+                lblTen.setAlignmentX(Component.CENTER_ALIGNMENT);
+                lblTen.setToolTipText(tenfile); // Hover de xem ten day du
+
+                // Hover effect sang mau nhe
+                card.addMouseListener(new java.awt.event.MouseAdapter() {
+                    @Override public void mouseEntered(java.awt.event.MouseEvent e) {
+                        card.setBackground(new Color(235, 238, 255));
+                    }
+                    @Override public void mouseExited(java.awt.event.MouseEvent e) {
+                        card.setBackground(new Color(248, 249, 252));
+                    }
+                });
+
+                card.add(lblIcon);
+                card.add(Box.createVerticalStrut(6));
+                card.add(lblTen);
+                pn_danhsach.add(card);
+            }
         }
+
+        pn_danhsach.revalidate();
+        pn_danhsach.repaint();
     }
 
     private void nut_tailen_hienthiActionPerformed(java.awt.event.ActionEvent evt) {
@@ -272,7 +355,8 @@ public class client_ui extends javax.swing.JFrame {
             CauHinh.SERVER_IP = "localhost";
         }
 
-        // (Đã loại bỏ tính năng tự chạy server ngầm, server sẽ chạy bằng Docker)
+        // Kiem tra ket noi va hien thi hop thoai thong bao (thanh cong / that bai)
+        thongbao.HopThoaiThongBao.hienThiVaKiemTra(CauHinh.SERVER_IP);
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
