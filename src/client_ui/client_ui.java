@@ -247,6 +247,7 @@ public class client_ui extends javax.swing.JFrame {
         String tendanhmuc = JOptionPane.showInputDialog(this, "nhap ten danh muc moi:");
         if (tendanhmuc != null && !tendanhmuc.isEmpty()) {
             goi_rmi.them_danhmuc(tendanhmuc, hienthi_rmi);
+            lamMoiDanhSach();
         }
     }//GEN-LAST:event_nut_danhmucActionPerformed
 
@@ -254,6 +255,7 @@ public class client_ui extends javax.swing.JFrame {
         String tentag = JOptionPane.showInputDialog(this, "nhap ten tag moi:");
         if (tentag != null && !tentag.isEmpty()) {
             goi_rmi.them_tag(tentag, hienthi_rmi);
+            lamMoiDanhSach();
         }
     }//GEN-LAST:event_nut_tagActionPerformed
 
@@ -280,11 +282,13 @@ public class client_ui extends javax.swing.JFrame {
     }
 
     private void capNhatBoLocCombobox() {
+        String rmiHost = chucnang3.PhanLuong.laLocal() ? "localhost" : CauHinh.SERVER_IP;
+
         // Fetch categories tu RMI
         java.util.List<String> dmList = new java.util.ArrayList<>();
         dmList.add("Tất cả danh mục");
         try {
-            java.rmi.registry.Registry registry = java.rmi.registry.LocateRegistry.getRegistry(CauHinh.SERVER_IP, 1099);
+            java.rmi.registry.Registry registry = java.rmi.registry.LocateRegistry.getRegistry(rmiHost, 1099);
             may_chu.dich_vu_rmi dichvu = (may_chu.dich_vu_rmi) registry.lookup("dichvurmi");
             String res = dichvu.quanly_danhmuc("laytat", "");
             if (res != null && !res.trim().isEmpty()) {
@@ -298,7 +302,7 @@ public class client_ui extends javax.swing.JFrame {
         java.util.List<String> tagList = new java.util.ArrayList<>();
         tagList.add("Tất cả tag");
         try {
-            java.rmi.registry.Registry registry = java.rmi.registry.LocateRegistry.getRegistry(CauHinh.SERVER_IP, 1099);
+            java.rmi.registry.Registry registry = java.rmi.registry.LocateRegistry.getRegistry(rmiHost, 1099);
             may_chu.dich_vu_rmi dichvu = (may_chu.dich_vu_rmi) registry.lookup("dichvurmi");
             String res = dichvu.quanly_tag("laytat", "");
             if (res != null && !res.trim().isEmpty()) {

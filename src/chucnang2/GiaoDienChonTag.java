@@ -31,8 +31,9 @@ public class GiaoDienChonTag extends JDialog {
         
         // Load danh muc tu RMI (MongoDB)
         java.util.List<String> listDanhMuc = new java.util.ArrayList<>();
+        String rmiHost = chucnang3.PhanLuong.laLocal() ? "localhost" : client_ui.CauHinh.SERVER_IP;
         try {
-            java.rmi.registry.Registry registry = java.rmi.registry.LocateRegistry.getRegistry(client_ui.CauHinh.SERVER_IP, 1099);
+            java.rmi.registry.Registry registry = java.rmi.registry.LocateRegistry.getRegistry(rmiHost, 1099);
             may_chu.dich_vu_rmi dichvu = (may_chu.dich_vu_rmi) registry.lookup("dichvurmi");
             String res = dichvu.quanly_danhmuc("laytat", "");
             if (res != null && !res.trim().isEmpty()) {
@@ -67,7 +68,7 @@ public class GiaoDienChonTag extends JDialog {
         // Load tag suggestions tu RMI (MongoDB)
         java.util.List<String> listTags = new java.util.ArrayList<>();
         try {
-            java.rmi.registry.Registry registry = java.rmi.registry.LocateRegistry.getRegistry(client_ui.CauHinh.SERVER_IP, 1099);
+            java.rmi.registry.Registry registry = java.rmi.registry.LocateRegistry.getRegistry(rmiHost, 1099);
             may_chu.dich_vu_rmi dichvu = (may_chu.dich_vu_rmi) registry.lookup("dichvurmi");
             String res = dichvu.quanly_tag("laytat", "");
             if (res != null && !res.trim().isEmpty()) {

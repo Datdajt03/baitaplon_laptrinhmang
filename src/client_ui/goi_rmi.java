@@ -11,7 +11,8 @@ public class goi_rmi {
     // goi ham them danh muc
     public static void them_danhmuc(String tendanhmuc, JTextArea hienthi) {
         try {
-            Registry quanly_rmi = LocateRegistry.getRegistry(CauHinh.SERVER_IP, 1099);
+            String rmiHost = chucnang3.PhanLuong.laLocal() ? "localhost" : CauHinh.SERVER_IP;
+            Registry quanly_rmi = LocateRegistry.getRegistry(rmiHost, 1099);
             dich_vu_rmi dichvu = (dich_vu_rmi) quanly_rmi.lookup("dichvurmi");
             
             String ketqua = dichvu.quanly_danhmuc("them", tendanhmuc);
@@ -24,7 +25,8 @@ public class goi_rmi {
     // goi ham them tag
     public static void them_tag(String tentag, JTextArea hienthi) {
         try {
-            Registry quanly_rmi = LocateRegistry.getRegistry(CauHinh.SERVER_IP, 1099);
+            String rmiHost = chucnang3.PhanLuong.laLocal() ? "localhost" : CauHinh.SERVER_IP;
+            Registry quanly_rmi = LocateRegistry.getRegistry(rmiHost, 1099);
             dich_vu_rmi dichvu = (dich_vu_rmi) quanly_rmi.lookup("dichvurmi");
             
             String ketqua = dichvu.quanly_tag("them", tentag);
@@ -37,7 +39,8 @@ public class goi_rmi {
     // goi ham thong ke luot tai
     public static void xem_thongke(JTextArea hienthi) {
         try {
-            Registry quanly_rmi = LocateRegistry.getRegistry(CauHinh.SERVER_IP, 1099);
+            String rmiHost = chucnang3.PhanLuong.laLocal() ? "localhost" : CauHinh.SERVER_IP;
+            Registry quanly_rmi = LocateRegistry.getRegistry(rmiHost, 1099);
             dich_vu_rmi dichvu = (dich_vu_rmi) quanly_rmi.lookup("dichvurmi");
             
             String ketqua = dichvu.thongke_luottai();
@@ -50,7 +53,8 @@ public class goi_rmi {
     // goi ham lay tat ca danh muc
     public static void xem_danhmuc(JTextArea hienthi) {
         try {
-            Registry quanly_rmi = LocateRegistry.getRegistry(CauHinh.SERVER_IP, 1099);
+            String rmiHost = chucnang3.PhanLuong.laLocal() ? "localhost" : CauHinh.SERVER_IP;
+            Registry quanly_rmi = LocateRegistry.getRegistry(rmiHost, 1099);
             dich_vu_rmi dichvu = (dich_vu_rmi) quanly_rmi.lookup("dichvurmi");
             
             String ketqua = dichvu.quanly_danhmuc("laytat", "");
@@ -70,7 +74,8 @@ public class goi_rmi {
     // goi ham lay tat ca tag
     public static void xem_tag(JTextArea hienthi) {
         try {
-            Registry quanly_rmi = LocateRegistry.getRegistry(CauHinh.SERVER_IP, 1099);
+            String rmiHost = chucnang3.PhanLuong.laLocal() ? "localhost" : CauHinh.SERVER_IP;
+            Registry quanly_rmi = LocateRegistry.getRegistry(rmiHost, 1099);
             dich_vu_rmi dichvu = (dich_vu_rmi) quanly_rmi.lookup("dichvurmi");
             
             String ketqua = dichvu.quanly_tag("laytat", "");
