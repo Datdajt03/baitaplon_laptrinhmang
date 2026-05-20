@@ -180,10 +180,10 @@ class luong_xu_ly_tcp extends Thread {
                     long dungluong = file_can_tai.length();
                     gui_di.writeUTF("ok|" + dungluong);
 
-                    chucnang.truyen_tai_file.gui_file(gui_di, file_can_tai);
-
-                    // Tang luot tai trong MongoDB theo ten file cu the
+                    // Tang luot tai trong MongoDB theo ten file cu the truoc de dam bao dong bo realtime tuc thi
                     dichvu_rmi.tang_luottai(thamso);
+
+                    chucnang.truyen_tai_file.gui_file(gui_di, file_can_tai);
                 } else {
                     gui_di.writeUTF("file khong ton tai");
                 }
