@@ -29,6 +29,7 @@ public class client_ui extends javax.swing.JFrame {
     public client_ui() {
         INSTANCE = this; // Set global instance
         initComponents();
+        setSize(800, 800); // Thiet lap kich thuoc cua so 800x800 luc mo
 
         // 1. Dat icon cua so (thanh taskbar + goc trai cua so)
         try {
