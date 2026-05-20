@@ -393,6 +393,37 @@ Nhóm đã tiến hành tái cấu trúc lại trình tự thực hiện tại f
 * **Đảo ngược logic xử lý:** Server thực hiện **Tăng lượt tải trong MongoDB trước** (`dichvu_rmi.tang_luottai`), sau đó mới **Truyền dữ liệu file qua TCP** (`truyen_tai_file.gui_file`).
 * **Hiệu quả:** Trong suốt thời gian file được truyền tải trên đường truyền vật lý (dù chỉ mất vài mili-giây), dữ liệu trong MongoDB đã được cập nhật thành công từ trước. Do đó, ngay khi Client tải xong file và kích hoạt lệnh refresh UI, dữ liệu tải về hiển thị chắc chắn là dữ liệu mới nhất, đảm bảo tính realtime đồng bộ 100%!
 
+### 6.2 Sự cố RMI NAT qua Docker & Giải pháp Bulletproof TCP Fallback cho Bộ Lọc
+
+#### 🛑 Hiện tượng lỗi:
+* Khi chạy ở chế độ **Local** (ngoại tuyến không có Radmin VPN hoặc chạy thử trên máy cục bộ), cuộc gọi RMI lấy danh mục và danh sách tag gợi ý bị **timeout hoặc lỗi chặn kết nối**.
+* Hai ô JComboBox chọn danh mục và tag ở tab Hiển thị chỉ xuất hiện giá trị mặc định ("Tất cả danh mục", "Tất cả tag") và không thể lấy danh sách gợi ý từ MongoDB.
+
+#### 🔍 Phân tích nguyên nhân:
+* Trong môi trường container hóa Docker, cổng RMI Registry `1099` được ánh xạ thành công, nhưng do Server gán cố định biến môi trường `RMI_HOSTNAME` theo IP Radmin VPN (ví dụ `26.18.244.131`), RMI Registry sẽ luôn trả về đối tượng Stub trỏ về IP Radmin này.
+* Khi Client chạy ở chế độ Local (hoặc khi VPN offline), máy trạm trỏ đến `localhost:1099` để lấy Registry nhưng sau đó bị buộc phải kết nối dữ liệu đến IP Radmin ảo `26.18.244.131`. Sự không đồng nhất về cấu hình định tuyến này dẫn đến lỗi kết nối RMI.
+
+#### 🩹 Giải pháp khắc phục tối ưu:
+* **Bắc cầu qua TCP (TCP Fallback Tunneling):** Vì cổng TCP `8888` đã được expose ổn định và hoàn toàn tin cậy trong mọi chế độ mạng (Local/LAN), nhóm phát triển đã xây dựng 2 lệnh TCP mới: `laytat_danhmuc` và `laytat_tag` trên tệp [may_chu_tcp.java](file:///a:/code%20javanetbean/Baitaplon_Nhom7/src/may_chu/may_chu_tcp.java).
+* **Đồng bộ hóa giao thức:** Client Swing chuyển đổi toàn bộ cơ chế tải dữ liệu bộ lọc (ComboBox) và hộp thoại chọn gợi ý khi Upload từ RMI sang kết nối qua **TCP**. Điều này giúp bộ lọc hoạt động mượt mà, đồng bộ MongoDB 100% kể cả khi RMI bị tường lửa hay NAT Docker chặn.
+
+### 6.3 Cơ Chế Quét Dữ Liệu Tự Chữa Lành (Self-Healing Dynamic Scan)
+
+#### 🛑 Thách thức kỹ thuật:
+* Khi hệ thống mới thiết lập, hai bộ sưu tập quản trị `danh_muc` và `tag` trên MongoDB hoàn toàn **trống rỗng** (do quản trị viên chưa thao tác thêm danh mục/tag qua tab RMI).
+* Kết quả là bộ lọc dropdown trên Client sẽ bị trắng và không thể hiện bất kỳ tuỳ chọn nào khác ngoài tuỳ chọn mặc định, gây khó khăn cho trải nghiệm tìm kiếm của người dùng.
+
+#### 🩹 Giải pháp khắc phục:
+* Nhóm đã bổ sung cơ chế quét hai lớp (Two-Layer Dynamic Scan) vào lệnh TCP của Server:
+  1. **Lớp 1:** Đọc toàn bộ danh mục/tag đã được quản trị viên khai báo trong bộ sưu tập `danh_muc` và `tag`.
+  2. **Lớp 2 (Tự chữa lành):** Tự động duyệt qua toàn bộ tài liệu đã được người dùng tải lên thực tế trong bộ sưu tập `tai_lieu` và trích xuất tất cả các nhãn danh mục/tag hiện có.
+* **Hiệu quả:** Bộ lọc và bảng gợi ý luôn được cập nhật đầy đủ và phản ánh chính xác nhất dữ liệu thực tế đang tồn tại trong thư viện tài liệu, nâng cao tính tự động hoá và tính bền vững của phần mềm.
+
+### 6.4 Tối Ưu Hóa Spacing & Trải Nghiệm Người Dùng (UX Auto-scaling)
+
+* **Thiết lập kích thước mặc định:** Để tránh hiện tượng giao diện bị co hẹp hoặc chồng chéo các phần tử khi mở ứng dụng ở các độ phân giải màn hình khác nhau, nhóm đã ghim cố định kích thước khởi động của Client Swing là **`800x800 px`** (`setSize(800, 800)`) và thực hiện tự động căn giữa màn hình (`setLocationRelativeTo(null)`).
+* **Hiệu quả:** Giao diện lưới Explorer 150x150 của thẻ tài liệu được dàn trang rộng rãi, thoáng mát, mang lại cảm giác cao cấp và dễ nhìn nhất cho người sử dụng.
+
 ---
 
 ## 7. Các Công Nghệ Sử Dụng

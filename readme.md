@@ -20,6 +20,9 @@
 | 🖼️ **Giao diện icon premium** | File Explorer card lưới 150x150 cực đẹp, tooltip HTML sinh động, JList HTML 2 dòng cao cấp ở cửa sổ phụ. |
 | 🌐 **Kết nối từ xa hoàn hảo** | Ghim cố định RMI và dữ liệu trên **cổng 1099** thông qua `super(1099)`, giải quyết triệt để lỗi chặn cổng ngẫu nhiên qua Radmin VPN. |
 | 🐳 **Docker Server** | Server chạy 24/7 trong container, deploy nhanh chóng bằng 1 lệnh. |
+| 🔀 **Đồng bộ bộ lọc TCP** | **[NEW]** Khắc phục triệt để lỗi RMI NAT Docker, đồng bộ danh mục/tag qua cổng TCP 8888 siêu ổn định. |
+| 🩹 **Tự động quét chữa lành** | **[NEW]** Tự động trích xuất danh mục/tag từ tài liệu thực tế khi database gợi ý bị trống. |
+| 📐 **Kích thước rộng rãi (800x800)** | **[NEW]** Tự động điều chỉnh kích thước cửa sổ rộng rãi khi khởi động, tối ưu không gian hiển thị Explorer. |
 
 ---
 
