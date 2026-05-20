@@ -17,6 +17,12 @@ public class client_ui extends javax.swing.JFrame {
     // Panel hien thi danh sach tai lieu dang icon
     private JPanel pn_danhsach;
 
+    // Cac bien loc duoc khai bao de chay realtime
+    private String[] fullDanhSach = new String[0];
+    private JComboBox<String> cb_loc_danhmuc;
+    private JComboBox<String> cb_loc_tag;
+    private boolean isUpdatingFilters = false;
+
     /**
      * Creates new form client_ui
      */
@@ -62,6 +68,17 @@ public class client_ui extends javax.swing.JFrame {
             goi_rmi.xem_tag(hienthi_rmi);
         });
         pn_rmi_tren.add(nut_xem_tag);
+
+        // 5.6. Them dropdown loc danh muc va loc tag vao pn_hienthi_tren
+        pn_hienthi_tren.add(new JLabel("  |  Lọc danh mục:"));
+        cb_loc_danhmuc = new JComboBox<>(new String[]{"Tất cả danh mục"});
+        cb_loc_danhmuc.addActionListener(e -> apDungBoLocHienTai());
+        pn_hienthi_tren.add(cb_loc_danhmuc);
+
+        pn_hienthi_tren.add(new JLabel("  Lọc tag:"));
+        cb_loc_tag = new JComboBox<>(new String[]{"Tất cả tag"});
+        cb_loc_tag.addActionListener(e -> apDungBoLocHienTai());
+        pn_hienthi_tren.add(cb_loc_tag);
 
         // 6. Tai danh sach tai lieu ngay khi mo
         nut_lammoiActionPerformed(null);
@@ -252,8 +269,108 @@ public class client_ui extends javax.swing.JFrame {
             } else {
                 danhsach = ket_noi_tcp.tim_kiem_mang("");
             }
-            SwingUtilities.invokeLater(() -> hienThiDanhSachIcon(danhsach));
+            fullDanhSach = danhsach; // Luu lai ban goc
+            
+            // Cap nhat cac ComboBox loc dynamically tu du lieu RMI/MongoDB thuc te
+            capNhatBoLocCombobox();
+
+            // Ap dung bo loc hien tai de ve UI
+            SwingUtilities.invokeLater(() -> apDungBoLocHienTai());
         }).start();
+    }
+
+    private void capNhatBoLocCombobox() {
+        // Fetch categories tu RMI
+        java.util.List<String> dmList = new java.util.ArrayList<>();
+        dmList.add("Tất cả danh mục");
+        try {
+            java.rmi.registry.Registry registry = java.rmi.registry.LocateRegistry.getRegistry(client_ui.CauHinh.SERVER_IP, 1099);
+            may_chu.dich_vu_rmi dichvu = (may_chu.dich_vu_rmi) registry.lookup("dichvurmi");
+            String res = dichvu.quanly_danhmuc("laytat", "");
+            if (res != null && !res.trim().isEmpty()) {
+                for (String s : res.split(";;")) {
+                    if (!dmList.contains(s)) dmList.add(s);
+                }
+            }
+        } catch (Exception ignored) {}
+
+        // Fetch tags tu RMI
+        java.util.List<String> tagList = new java.util.ArrayList<>();
+        tagList.add("Tất cả tag");
+        try {
+            java.rmi.registry.Registry registry = java.rmi.registry.LocateRegistry.getRegistry(client_ui.CauHinh.SERVER_IP, 1099);
+            may_chu.dich_vu_rmi dichvu = (may_chu.dich_vu_rmi) registry.lookup("dichvurmi");
+            String res = dichvu.quanly_tag("laytat", "");
+            if (res != null && !res.trim().isEmpty()) {
+                for (String s : res.split(";;")) {
+                    if (!tagList.contains(s)) tagList.add(s);
+                }
+            }
+        } catch (Exception ignored) {}
+
+        // Update cb_loc_danhmuc va cb_loc_tag tren EDT
+        SwingUtilities.invokeLater(() -> {
+            isUpdatingFilters = true;
+            
+            // Luu lua chon hien tai
+            String curDM = cb_loc_danhmuc.getSelectedItem() != null ? cb_loc_danhmuc.getSelectedItem().toString() : "Tất cả danh mục";
+            String curTag = cb_loc_tag.getSelectedItem() != null ? cb_loc_tag.getSelectedItem().toString() : "Tất cả tag";
+
+            cb_loc_danhmuc.removeAllItems();
+            for (String dm : dmList) {
+                cb_loc_danhmuc.addItem(dm);
+            }
+            if (dmList.contains(curDM)) {
+                cb_loc_danhmuc.setSelectedItem(curDM);
+            } else {
+                cb_loc_danhmuc.setSelectedIndex(0);
+            }
+
+            cb_loc_tag.removeAllItems();
+            for (String tag : tagList) {
+                cb_loc_tag.addItem(tag);
+            }
+            if (tagList.contains(curTag)) {
+                cb_loc_tag.setSelectedItem(curTag);
+            } else {
+                cb_loc_tag.setSelectedIndex(0);
+            }
+
+            isUpdatingFilters = false;
+        });
+    }
+
+    public void apDungBoLocHienTai() {
+        if (isUpdatingFilters) return;
+        
+        String chonDM = cb_loc_danhmuc.getSelectedItem() != null ? cb_loc_danhmuc.getSelectedItem().toString() : "Tất cả danh mục";
+        String chonTag = cb_loc_tag.getSelectedItem() != null ? cb_loc_tag.getSelectedItem().toString() : "Tất cả tag";
+
+        java.util.List<String> filtered = new java.util.ArrayList<>();
+        for (String item : fullDanhSach) {
+            String[] parts = item.split("\\|");
+            String danhmuc = parts.length > 2 ? parts[2] : "Khác";
+            String tags = parts.length > 3 ? parts[3] : "";
+
+            // Check Category filter
+            boolean matchDM = chonDM.equals("Tất cả danh mục") || danhmuc.equalsIgnoreCase(chonDM);
+
+            // Check Tag filter
+            boolean matchTag = chonTag.equals("Tất cả tag");
+            if (!matchTag) {
+                for (String t : tags.split(",")) {
+                    if (t.trim().equalsIgnoreCase(chonTag.trim())) {
+                        matchTag = true;
+                        break;
+                    }
+                }
+            }
+
+            if (matchDM && matchTag) {
+                filtered.add(item);
+            }
+        }
+        hienThiDanhSachIcon(filtered.toArray(new String[0]));
     }
 
     private void nut_lammoiActionPerformed(java.awt.event.ActionEvent evt) {
