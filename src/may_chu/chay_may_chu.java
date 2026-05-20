@@ -62,9 +62,10 @@ public class chay_may_chu {
                     }
                 } catch (Exception ignored) {}
 
-                if (ipHopLe) {
+                boolean isDocker = new java.io.File("/.dockerenv").exists();
+                if (ipHopLe || isDocker) {
                     System.setProperty("java.rmi.server.hostname", rmiHostname.trim());
-                    System.out.println("[RMI] Da dat java.rmi.server.hostname = " + rmiHostname.trim());
+                    System.out.println("[RMI] Da dat java.rmi.server.hostname = " + rmiHostname.trim() + (isDocker ? " (Docker Mode)" : ""));
                 } else {
                     System.out.println("[RMI] CANH BAO: IP RMI \"" + rmiHostname.trim() + "\" khong hoat dong tren may chu nay.");
                     System.out.println("[RMI] (Co the do Radmin VPN dang tat hoac day la may khac).");

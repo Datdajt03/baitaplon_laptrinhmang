@@ -46,4 +46,44 @@ public class goi_rmi {
             hienthi.append("loi goi rmi: " + loi.getMessage() + "\n");
         }
     }
+
+    // goi ham lay tat ca danh muc
+    public static void xem_danhmuc(JTextArea hienthi) {
+        try {
+            Registry quanly_rmi = LocateRegistry.getRegistry(CauHinh.SERVER_IP, 1099);
+            dich_vu_rmi dichvu = (dich_vu_rmi) quanly_rmi.lookup("dichvurmi");
+            
+            String ketqua = dichvu.quanly_danhmuc("laytat", "");
+            if (ketqua == null || ketqua.trim().isEmpty()) {
+                hienthi.append("danh sach danh muc trong.\n");
+            } else {
+                hienthi.append("--- DANH SACH DANH MUC ---\n");
+                for (String dm : ketqua.split(";;")) {
+                    hienthi.append("  * " + dm + "\n");
+                }
+            }
+        } catch (Exception loi) {
+            hienthi.append("loi goi rmi: " + loi.getMessage() + "\n");
+        }
+    }
+
+    // goi ham lay tat ca tag
+    public static void xem_tag(JTextArea hienthi) {
+        try {
+            Registry quanly_rmi = LocateRegistry.getRegistry(CauHinh.SERVER_IP, 1099);
+            dich_vu_rmi dichvu = (dich_vu_rmi) quanly_rmi.lookup("dichvurmi");
+            
+            String ketqua = dichvu.quanly_tag("laytat", "");
+            if (ketqua == null || ketqua.trim().isEmpty()) {
+                hienthi.append("danh sach tag goi y trong.\n");
+            } else {
+                hienthi.append("--- DANH SACH TAG GOI Y ---\n");
+                for (String t : ketqua.split(";;")) {
+                    hienthi.append("  # " + t + "\n");
+                }
+            }
+        } catch (Exception loi) {
+            hienthi.append("loi goi rmi: " + loi.getMessage() + "\n");
+        }
+    }
 }

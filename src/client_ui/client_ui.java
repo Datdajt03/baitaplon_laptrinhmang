@@ -50,6 +50,19 @@ public class client_ui extends javax.swing.JFrame {
         hienthi_udp.setText("dang lang nghe thong bao tai lieu moi (udp)...\n");
         hienthi_rmi.setText("ket qua quan tri rmi hien o day...\n");
 
+        // 5.5. Them hai nut xem danh muc va xem tag qua RMI
+        JButton nut_xem_danhmuc = new JButton("xem danh mục");
+        nut_xem_danhmuc.addActionListener(e -> {
+            goi_rmi.xem_danhmuc(hienthi_rmi);
+        });
+        pn_rmi_tren.add(nut_xem_danhmuc);
+
+        JButton nut_xem_tag = new JButton("xem tag gợi ý");
+        nut_xem_tag.addActionListener(e -> {
+            goi_rmi.xem_tag(hienthi_rmi);
+        });
+        pn_rmi_tren.add(nut_xem_tag);
+
         // 6. Tai danh sach tai lieu ngay khi mo
         nut_lammoiActionPerformed(null);
     }

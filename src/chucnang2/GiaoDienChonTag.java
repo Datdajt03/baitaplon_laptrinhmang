@@ -29,10 +29,31 @@ public class GiaoDienChonTag extends JDialog {
         pn_file.add(new JLabel("Tài liệu: " + file.getName()));
         pn_center.add(pn_file);
         
+        // Load danh muc tu RMI (MongoDB)
+        java.util.List<String> listDanhMuc = new java.util.ArrayList<>();
+        try {
+            java.rmi.registry.Registry registry = java.rmi.registry.LocateRegistry.getRegistry(client_ui.CauHinh.SERVER_IP, 1099);
+            may_chu.dich_vu_rmi dichvu = (may_chu.dich_vu_rmi) registry.lookup("dichvurmi");
+            String res = dichvu.quanly_danhmuc("laytat", "");
+            if (res != null && !res.trim().isEmpty()) {
+                for (String s : res.split(";;")) {
+                    listDanhMuc.add(s);
+                }
+            }
+        } catch (Exception ignored) {}
+        
+        if (listDanhMuc.isEmpty()) {
+            listDanhMuc.add("Bài giảng");
+            listDanhMuc.add("Đề thi");
+            listDanhMuc.add("Bài tập lớn");
+            listDanhMuc.add("Tham khảo");
+            listDanhMuc.add("Khác");
+        }
+
         // Danh muc
         JPanel pn_danhmuc = new JPanel(new FlowLayout(FlowLayout.LEFT));
         pn_danhmuc.add(new JLabel("Chọn danh mục: "));
-        cb_danhmuc = new JComboBox<>(new String[]{"Bài giảng", "Đề thi", "Bài tập lớn", "Tham khảo", "Khác"});
+        cb_danhmuc = new JComboBox<>(listDanhMuc.toArray(new String[0]));
         pn_danhmuc.add(cb_danhmuc);
         pn_center.add(pn_danhmuc);
         
@@ -43,20 +64,33 @@ public class GiaoDienChonTag extends JDialog {
         pn_tag.add(txt_tag);
         pn_center.add(pn_tag);
         
+        // Load tag suggestions tu RMI (MongoDB)
+        java.util.List<String> listTags = new java.util.ArrayList<>();
+        try {
+            java.rmi.registry.Registry registry = java.rmi.registry.LocateRegistry.getRegistry(client_ui.CauHinh.SERVER_IP, 1099);
+            may_chu.dich_vu_rmi dichvu = (may_chu.dich_vu_rmi) registry.lookup("dichvurmi");
+            String res = dichvu.quanly_tag("laytat", "");
+            if (res != null && !res.trim().isEmpty()) {
+                for (String s : res.split(";;")) {
+                    listTags.add(s);
+                }
+            }
+        } catch (Exception ignored) {}
+        
+        if (listTags.isEmpty()) {
+            listTags.add("java");
+            listTags.add("lap trinh mang");
+            listTags.add("khoa hoc may tinh");
+        }
+
         // Goi y
         JPanel pn_goiy = new JPanel(new FlowLayout(FlowLayout.LEFT));
         pn_goiy.add(new JLabel("Gợi ý tag nổi bật: "));
-        JButton btn_goi_y_1 = new JButton("java");
-        JButton btn_goi_y_2 = new JButton("lap trinh mang");
-        JButton btn_goi_y_3 = new JButton("khoa hoc may tinh");
-        
-        btn_goi_y_1.addActionListener(e -> themTag("java"));
-        btn_goi_y_2.addActionListener(e -> themTag("lap trinh mang"));
-        btn_goi_y_3.addActionListener(e -> themTag("khoa hoc may tinh"));
-        
-        pn_goiy.add(btn_goi_y_1);
-        pn_goiy.add(btn_goi_y_2);
-        pn_goiy.add(btn_goi_y_3);
+        for (String t : listTags) {
+            JButton btn_tag_item = new JButton(t);
+            btn_tag_item.addActionListener(e -> themTag(t));
+            pn_goiy.add(btn_tag_item);
+        }
         pn_center.add(pn_goiy);
         
         add(pn_center, BorderLayout.CENTER);
