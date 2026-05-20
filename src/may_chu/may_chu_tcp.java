@@ -110,6 +110,28 @@ class luong_xu_ly_tcp extends Thread {
                     gui_di.writeUTF(String.join(";;", ketqua));
                 }
             }
+            
+            // --------------------------------------------------
+            // LAY TAT CA DANH MUC TU MONGODB (De tranh loi RMI NAT qua Docker)
+            // --------------------------------------------------
+            else if (hanhdong.equals("laytat_danhmuc")) {
+                List<String> ds = new ArrayList<>();
+                for (Document doc : MongoKetNoi.layDanhMuc().find()) {
+                    ds.add(doc.getString("ten"));
+                }
+                gui_di.writeUTF(String.join(";;", ds));
+            }
+
+            // --------------------------------------------------
+            // LAY TAT CA TAG TU MONGODB (De tranh loi RMI NAT qua Docker)
+            // --------------------------------------------------
+            else if (hanhdong.equals("laytat_tag")) {
+                List<String> ds = new ArrayList<>();
+                for (Document doc : MongoKetNoi.layTag().find()) {
+                    ds.add(doc.getString("ten"));
+                }
+                gui_di.writeUTF(String.join(";;", ds));
+            }
 
             // --------------------------------------------------
             // TAI LEN: luu file + ghi metadata vao MongoDB

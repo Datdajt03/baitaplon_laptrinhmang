@@ -135,4 +135,36 @@ public class KetNoiLocal {
             hienthi.append("Loi tai xuong local: " + loi.getMessage() + "\n");
         }
     }
+
+    public static String laytat_danhmuc() {
+        try {
+            Socket mang = new Socket(LOCAL_IP, LOCAL_PORT);
+            DataOutputStream gui_di  = new DataOutputStream(mang.getOutputStream());
+            DataInputStream  nhan_ve = new DataInputStream(mang.getInputStream());
+
+            gui_di.writeUTF("laytat_danhmuc");
+            String ketqua = nhan_ve.readUTF();
+            mang.close();
+            return ketqua;
+        } catch (Exception loi) {
+            System.out.println("[LOCAL] Loi laytat_danhmuc: " + loi.getMessage());
+        }
+        return "";
+    }
+
+    public static String laytat_tag() {
+        try {
+            Socket mang = new Socket(LOCAL_IP, LOCAL_PORT);
+            DataOutputStream gui_di  = new DataOutputStream(mang.getOutputStream());
+            DataInputStream  nhan_ve = new DataInputStream(mang.getInputStream());
+
+            gui_di.writeUTF("laytat_tag");
+            String ketqua = nhan_ve.readUTF();
+            mang.close();
+            return ketqua;
+        } catch (Exception loi) {
+            System.out.println("[LOCAL] Loi laytat_tag: " + loi.getMessage());
+        }
+        return "";
+    }
 }

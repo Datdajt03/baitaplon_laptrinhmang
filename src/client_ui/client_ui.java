@@ -282,35 +282,43 @@ public class client_ui extends javax.swing.JFrame {
     }
 
     private void capNhatBoLocCombobox() {
-        String rmiHost = chucnang3.PhanLuong.laLocal() ? "localhost" : CauHinh.SERVER_IP;
-
-        // Fetch categories tu RMI
+        // Fetch categories tu TCP (Đảm bảo đồng bộ 100% không bị chặn bởi RMI Docker)
         java.util.List<String> dmList = new java.util.ArrayList<>();
         dmList.add("Tất cả danh mục");
         try {
-            java.rmi.registry.Registry registry = java.rmi.registry.LocateRegistry.getRegistry(rmiHost, 1099);
-            may_chu.dich_vu_rmi dichvu = (may_chu.dich_vu_rmi) registry.lookup("dichvurmi");
-            String res = dichvu.quanly_danhmuc("laytat", "");
+            String res;
+            if (chucnang3.PhanLuong.laLocal()) {
+                res = chucnang3.KetNoiLocal.laytat_danhmuc();
+            } else {
+                res = ket_noi_tcp.laytat_danhmuc();
+            }
             if (res != null && !res.trim().isEmpty()) {
                 for (String s : res.split(";;")) {
                     if (!dmList.contains(s)) dmList.add(s);
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            System.out.println("[TCP FILTER] Loi lay danh muc: " + e.getMessage());
+        }
 
-        // Fetch tags tu RMI
+        // Fetch tags tu TCP (Đảm bảo đồng bộ 100% không bị chặn bởi RMI Docker)
         java.util.List<String> tagList = new java.util.ArrayList<>();
         tagList.add("Tất cả tag");
         try {
-            java.rmi.registry.Registry registry = java.rmi.registry.LocateRegistry.getRegistry(rmiHost, 1099);
-            may_chu.dich_vu_rmi dichvu = (may_chu.dich_vu_rmi) registry.lookup("dichvurmi");
-            String res = dichvu.quanly_tag("laytat", "");
+            String res;
+            if (chucnang3.PhanLuong.laLocal()) {
+                res = chucnang3.KetNoiLocal.laytat_tag();
+            } else {
+                res = ket_noi_tcp.laytat_tag();
+            }
             if (res != null && !res.trim().isEmpty()) {
                 for (String s : res.split(";;")) {
                     if (!tagList.contains(s)) tagList.add(s);
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            System.out.println("[TCP FILTER] Loi lay tag: " + e.getMessage());
+        }
 
         // Update cb_loc_danhmuc va cb_loc_tag tren EDT
         SwingUtilities.invokeLater(() -> {

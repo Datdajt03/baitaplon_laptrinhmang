@@ -29,13 +29,15 @@ public class GiaoDienChonTag extends JDialog {
         pn_file.add(new JLabel("Tài liệu: " + file.getName()));
         pn_center.add(pn_file);
         
-        // Load danh muc tu RMI (MongoDB)
+        // Load danh muc tu TCP (MongoDB) (Đảm bảo đồng bộ 100% không bị chặn bởi RMI Docker)
         java.util.List<String> listDanhMuc = new java.util.ArrayList<>();
-        String rmiHost = chucnang3.PhanLuong.laLocal() ? "localhost" : client_ui.CauHinh.SERVER_IP;
         try {
-            java.rmi.registry.Registry registry = java.rmi.registry.LocateRegistry.getRegistry(rmiHost, 1099);
-            may_chu.dich_vu_rmi dichvu = (may_chu.dich_vu_rmi) registry.lookup("dichvurmi");
-            String res = dichvu.quanly_danhmuc("laytat", "");
+            String res;
+            if (chucnang3.PhanLuong.laLocal()) {
+                res = chucnang3.KetNoiLocal.laytat_danhmuc();
+            } else {
+                res = client_ui.ket_noi_tcp.laytat_danhmuc();
+            }
             if (res != null && !res.trim().isEmpty()) {
                 for (String s : res.split(";;")) {
                     listDanhMuc.add(s);
@@ -65,12 +67,15 @@ public class GiaoDienChonTag extends JDialog {
         pn_tag.add(txt_tag);
         pn_center.add(pn_tag);
         
-        // Load tag suggestions tu RMI (MongoDB)
+        // Load tag suggestions tu TCP (MongoDB) (Đảm bảo đồng bộ 100% không bị chặn bởi RMI Docker)
         java.util.List<String> listTags = new java.util.ArrayList<>();
         try {
-            java.rmi.registry.Registry registry = java.rmi.registry.LocateRegistry.getRegistry(rmiHost, 1099);
-            may_chu.dich_vu_rmi dichvu = (may_chu.dich_vu_rmi) registry.lookup("dichvurmi");
-            String res = dichvu.quanly_tag("laytat", "");
+            String res;
+            if (chucnang3.PhanLuong.laLocal()) {
+                res = chucnang3.KetNoiLocal.laytat_tag();
+            } else {
+                res = client_ui.ket_noi_tcp.laytat_tag();
+            }
             if (res != null && !res.trim().isEmpty()) {
                 for (String s : res.split(";;")) {
                     listTags.add(s);

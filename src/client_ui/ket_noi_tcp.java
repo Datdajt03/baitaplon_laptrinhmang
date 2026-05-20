@@ -121,4 +121,36 @@ public class ket_noi_tcp {
             hienthi.append("Loi tai xuong: " + loi.getMessage() + "\n");
         }
     }
+
+    public static String laytat_danhmuc() {
+        try {
+            Socket mang = new Socket(CauHinh.SERVER_IP, 8888);
+            DataOutputStream gui_di  = new DataOutputStream(mang.getOutputStream());
+            DataInputStream  nhan_ve = new DataInputStream(mang.getInputStream());
+
+            gui_di.writeUTF("laytat_danhmuc");
+            String ketqua = nhan_ve.readUTF();
+            mang.close();
+            return ketqua;
+        } catch (Exception loi) {
+            System.out.println("[TCP] Loi laytat_danhmuc: " + loi.getMessage());
+        }
+        return "";
+    }
+
+    public static String laytat_tag() {
+        try {
+            Socket mang = new Socket(CauHinh.SERVER_IP, 8888);
+            DataOutputStream gui_di  = new DataOutputStream(mang.getOutputStream());
+            DataInputStream  nhan_ve = new DataInputStream(mang.getInputStream());
+
+            gui_di.writeUTF("laytat_tag");
+            String ketqua = nhan_ve.readUTF();
+            mang.close();
+            return ketqua;
+        } catch (Exception loi) {
+            System.out.println("[TCP] Loi laytat_tag: " + loi.getMessage());
+        }
+        return "";
+    }
 }
