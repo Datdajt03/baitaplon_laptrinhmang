@@ -33,32 +33,43 @@ public class PhanLuong {
     public static CheDo xacDinhKetNoi() {
         System.out.println("[PHAN LUONG] Dang kiem tra server local (localhost:8888)...");
 
-        // Buoc 1: Thu ket noi localhost
-        if (KiemTraKetNoi.kiemTra("localhost", 8888)) {
-            // Server dang chay tren may nay → che do LOCAL
-            cheDo = CheDo.LOCAL;
-            CauHinh.SERVER_IP = "localhost";
-            System.out.println("[PHAN LUONG] → Tim thay server LOCAL. Ket noi localhost.");
-            return cheDo;
+        // Buoc 1: Kiem tra xem server local co dang bat khong
+        boolean coLocal = KiemTraKetNoi.kiemTra("localhost", 8888);
+
+        if (coLocal) {
+            // Tim thay server local -> Hỏi nguoi dung xem muon vao luon local hay muon nhap IP LAN khac
+            int luaChon = javax.swing.JOptionPane.showConfirmDialog(null,
+                "Tìm thấy Server đang chạy trên máy này (localhost).\n"
+                + "Bạn có muốn kết nối tới Server Local này không?\n"
+                + "(Chọn 'No' để nhập IP của Server khác qua mạng LAN / VPN)",
+                "Phát Hiện Server Local",
+                javax.swing.JOptionPane.YES_NO_OPTION,
+                javax.swing.JOptionPane.QUESTION_MESSAGE);
+
+            if (luaChon == javax.swing.JOptionPane.YES_OPTION) {
+                cheDo = CheDo.LOCAL;
+                CauHinh.SERVER_IP = "localhost";
+                System.out.println("[PHAN LUONG] → Nguoi dung chon ket noi LOCAL (localhost).");
+                return cheDo;
+            }
         }
 
-        // Buoc 2: Localhost khong co → hoi IP LAN
-        System.out.println("[PHAN LUONG] → Khong tim thay server local. Chuyen sang che do LAN.");
+        // Buoc 2: Neu khong co server local, hoac nguoi dung chon 'No' (muon ket noi LAN)
+        System.out.println("[PHAN LUONG] → Chuyen sang che do nhap IP LAN.");
         cheDo = CheDo.LAN;
 
         String ip = javax.swing.JOptionPane.showInputDialog(null,
-            "Không tìm thấy server trên máy này.\n"
-            + "Nhập địa chỉ IP của Server LAN (VD: 192.168.1.100):",
-            "Kết Nối LAN",
+            "Nhập địa chỉ IP của Server LAN / Radmin VPN\n(Ví dụ: 192.168.1.100 hoặc 26.18.244.131):",
+            "Kết Nối LAN / VPN",
             javax.swing.JOptionPane.QUESTION_MESSAGE);
 
         if (ip != null && !ip.trim().isEmpty()) {
             CauHinh.SERVER_IP = ip.trim();
         } else {
-            // Nguoi dung huy hoac de trong → thu lai localhost
+            // Nguoi dung huy hoac de trong → mac dinh quay ve localhost
             CauHinh.SERVER_IP = "localhost";
             cheDo = CheDo.LOCAL;
-            System.out.println("[PHAN LUONG] → Nguoi dung khong nhap IP, quay ve localhost.");
+            System.out.println("[PHAN LUONG] → Nguoi dung de trong IP, mac dinh ve localhost.");
         }
 
         return cheDo;

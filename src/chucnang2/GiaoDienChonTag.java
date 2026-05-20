@@ -69,12 +69,24 @@ public class GiaoDienChonTag extends JDialog {
             String tag = txt_tag.getText();
             
             // Hien thi thong tin tag/danh muc
-            hienthi.append("\nChuan bi tai len: " + file.getName());
-            hienthi.append("\nDanh muc: " + danhmuc);
-            hienthi.append("\nTag: " + (tag.isEmpty() ? "Khong co" : tag) + "\n");
+            hienthi.append("\nChuẩn bị tải lên: " + file_upload.getName());
+            hienthi.append("\nDanh mục: " + danhmuc);
+            hienthi.append("\nTag: " + (tag.isEmpty() ? "Không có" : tag) + "\n");
 
-            // Goi tai len - truyen day du danh muc va tags vao lenh gui Server
-            ket_noi_tcp.tai_len(file_upload, hienthi, danhmuc, tag);
+            // Chạy tiến trình gửi ngầm để tránh đơ giao diện
+            new Thread(() -> {
+                if (chucnang3.PhanLuong.laLocal()) {
+                    chucnang3.KetNoiLocal.tai_len(file_upload, hienthi, danhmuc, tag);
+                } else {
+                    client_ui.ket_noi_tcp.tai_len(file_upload, hienthi, danhmuc, tag);
+                }
+                
+                // Tự động làm mới danh sách tài liệu trên giao diện chính ngay lập tức
+                if (client_ui.client_ui.INSTANCE != null) {
+                    client_ui.client_ui.INSTANCE.lamMoiDanhSach();
+                }
+            }).start();
+            
             dispose();
         });
         pn_bottom.add(btn_xacnhan);

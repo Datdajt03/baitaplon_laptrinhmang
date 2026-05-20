@@ -81,7 +81,26 @@ class luong_xu_ly_tcp extends Thread {
                 for (Document doc : col.find()) {
                     String tenFile = doc.getString("ten_file");
                     if (tenFile != null && tenFile.contains(thamso)) {
-                        ketqua.add(tenFile);
+                        long kichThuoc = 0;
+                        Object ktObj = doc.get("kich_thuoc");
+                        if (ktObj instanceof Number) {
+                            kichThuoc = ((Number) ktObj).longValue();
+                        }
+
+                        String danhmuc = doc.getString("danh_muc");
+                        if (danhmuc == null) danhmuc = "Khac";
+
+                        List<String> tagsList = doc.getList("tags", String.class);
+                        String tags = (tagsList != null && !tagsList.isEmpty()) ? String.join(", ", tagsList) : "";
+
+                        long luotTai = 0;
+                        Object ltObj = doc.get("luot_tai");
+                        if (ltObj instanceof Number) {
+                            luotTai = ((Number) ltObj).longValue();
+                        }
+
+                        String info = tenFile + "|" + kichThuoc + "|" + danhmuc + "|" + tags + "|" + luotTai;
+                        ketqua.add(info);
                     }
                 }
 

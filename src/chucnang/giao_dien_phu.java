@@ -9,6 +9,7 @@ public class giao_dien_phu extends javax.swing.JFrame {
 
     // tham chieu den khung hien thi cua client chinh de ghi log (neu can)
     private javax.swing.JTextArea hienthi_log;
+    private String[] originalFiles;
 
     /**
      * Creates new form giao_dien_phu
@@ -76,11 +77,44 @@ public class giao_dien_phu extends javax.swing.JFrame {
 
     private void nut_timkiemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nut_timkiemActionPerformed
         String tukhoa = nhap_timkiem.getText();
-        String[] ketqua = ket_noi_tcp.tim_kiem_mang(tukhoa);
+        
+        // Ho tro tu dong phan luong Local vs LAN
+        String[] ketqua;
+        if (chucnang3.PhanLuong.laLocal()) {
+            ketqua = chucnang3.KetNoiLocal.tim_kiem_mang(tukhoa);
+        } else {
+            ketqua = client_ui.ket_noi_tcp.tim_kiem_mang(tukhoa);
+        }
+        
+        this.originalFiles = ketqua; // Luu lai danh sach cac file raw
         
         DefaultListModel<String> model = new DefaultListModel<>();
-        for (String tenfile : ketqua) {
-            model.addElement(tenfile);
+        for (String item : ketqua) {
+            String[] parts = item.split("\\|");
+            String tenfile = parts[0];
+            long size = parts.length > 1 ? Long.parseLong(parts[1]) : 0;
+            String danhmuc = parts.length > 2 ? parts[2] : "Khác";
+            String tags = parts.length > 3 ? parts[3] : "";
+            long luotTai = parts.length > 4 ? Long.parseLong(parts[4]) : 0;
+
+            String sizeStr;
+            if (size >= 1024 * 1024) {
+                sizeStr = String.format("%.1f MB", size / (1024.0 * 1024.0));
+            } else if (size >= 1024) {
+                sizeStr = String.format("%.1f KB", size / 1024.0);
+            } else {
+                sizeStr = size + " B";
+            }
+
+            // Dinh dang HTML hien thi list item cuc dep
+            String formatHtml = "<html><body style='padding: 3px;'>"
+                    + "<b>📄 " + tenfile + "</b><br>"
+                    + "<font color='#555555'>&nbsp;&nbsp;&nbsp;&nbsp;Danh mục: <b>" + danhmuc + "</b>"
+                    + " • Dung lượng: <b>" + sizeStr + "</b>"
+                    + " • Lượt tải: <b>" + luotTai + "</b>"
+                    + (tags.isEmpty() ? "" : " • Tags: <font color='green'>#" + tags + "</font>")
+                    + "</font></body></html>";
+            model.addElement(formatHtml);
         }
         
         if (ketqua.length == 0) {
@@ -91,9 +125,30 @@ public class giao_dien_phu extends javax.swing.JFrame {
     }//GEN-LAST:event_nut_timkiemActionPerformed
 
     private void nut_taixuongActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nut_taixuongActionPerformed
-        String tenfile = danh_sach_tai_lieu.getSelectedValue();
-        if (tenfile != null && !tenfile.equals("Không tìm thấy file nào!")) {
-            ket_noi_tcp.tai_xuong(tenfile, hienthi_log);
+        int index = danh_sach_tai_lieu.getSelectedIndex();
+        if (index != -1 && originalFiles != null && index < originalFiles.length) {
+            String rawItem = originalFiles[index];
+            String tenfile = rawItem.split("\\|")[0];
+            
+            // Chay ngam de tranh dong bang giao dien va tu dong cap nhat luot tai realtime!
+            new Thread(() -> {
+                if (chucnang3.PhanLuong.laLocal()) {
+                    chucnang3.KetNoiLocal.tai_xuong(tenfile, hienthi_log);
+                } else {
+                    client_ui.ket_noi_tcp.tai_xuong(tenfile, hienthi_log);
+                }
+                
+                // 1. Tu dong lam moi danh sach o Client chinh de cap nhat luot tai moi nhat
+                if (client_ui.client_ui.INSTANCE != null) {
+                    client_ui.client_ui.INSTANCE.lamMoiDanhSach();
+                }
+                
+                // 2. Tu dong lam moi danh sach tim kiem hien tai trong giao_dien_phu
+                javax.swing.SwingUtilities.invokeLater(() -> {
+                    nut_timkiemActionPerformed(null);
+                });
+            }).start();
+            
             JOptionPane.showMessageDialog(this, "Đã gọi lệnh tải xuống file: " + tenfile);
         } else {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn 1 file trong danh sách trước khi tải!");

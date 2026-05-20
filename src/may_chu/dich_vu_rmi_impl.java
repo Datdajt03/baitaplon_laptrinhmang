@@ -17,7 +17,7 @@ import org.bson.Document;
 public class dich_vu_rmi_impl extends UnicastRemoteObject implements dich_vu_rmi {
 
     public dich_vu_rmi_impl() throws RemoteException {
-        super();
+        super(1099); // Ghim cong 1099 cố định để không bị Firewall/Docker chặn cổng ngẫu nhiên
     }
 
     // =========================================================

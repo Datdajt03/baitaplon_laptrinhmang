@@ -11,6 +11,9 @@ import javax.swing.*;
 // lop chinh cua giao dien
 public class client_ui extends javax.swing.JFrame {
 
+    // Global active instance for real-time updates
+    public static client_ui INSTANCE;
+
     // Panel hien thi danh sach tai lieu dang icon
     private JPanel pn_danhsach;
 
@@ -18,6 +21,7 @@ public class client_ui extends javax.swing.JFrame {
      * Creates new form client_ui
      */
     public client_ui() {
+        INSTANCE = this; // Set global instance
         initComponents();
 
         // 1. Dat icon cua so (thanh taskbar + goc trai cua so)
@@ -227,7 +231,7 @@ public class client_ui extends javax.swing.JFrame {
         goi_rmi.xem_thongke(hienthi_rmi);
     }//GEN-LAST:event_nut_thongkeActionPerformed
 
-    private void nut_lammoiActionPerformed(java.awt.event.ActionEvent evt) {
+    public void lamMoiDanhSach() {
         new Thread(() -> {
             String[] danhsach;
             if (chucnang3.PhanLuong.laLocal()) {
@@ -237,6 +241,10 @@ public class client_ui extends javax.swing.JFrame {
             }
             SwingUtilities.invokeLater(() -> hienThiDanhSachIcon(danhsach));
         }).start();
+    }
+
+    private void nut_lammoiActionPerformed(java.awt.event.ActionEvent evt) {
+        lamMoiDanhSach();
     }
 
     // Hien thi danh sach tai lieu dang icon card voi hinh anh dai dien
@@ -260,16 +268,34 @@ public class client_ui extends javax.swing.JFrame {
             lbl.setForeground(Color.GRAY);
             pn_danhsach.add(lbl);
         } else {
-            for (String tenfile : danhsach) {
-                // Moi file la 1 card: icon + ten file
+            for (String item : danhsach) {
+                // Item dang: tenfile|size|category|tags|downloads
+                String[] parts = item.split("\\|");
+                String tenfile = parts[0];
+                long size = parts.length > 1 ? Long.parseLong(parts[1]) : 0;
+                String danhmuc = parts.length > 2 ? parts[2] : "Khác";
+                String tags = parts.length > 3 ? parts[3] : "";
+                long luotTai = parts.length > 4 ? Long.parseLong(parts[4]) : 0;
+
+                // Dinh dang dung luong
+                String sizeStr;
+                if (size >= 1024 * 1024) {
+                    sizeStr = String.format("%.1f MB", size / (1024.0 * 1024.0));
+                } else if (size >= 1024) {
+                    sizeStr = String.format("%.1f KB", size / 1024.0);
+                } else {
+                    sizeStr = size + " B";
+                }
+
+                // Moi file la 1 card: icon + ten file + metadata
                 JPanel card = new JPanel();
                 card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
                 card.setBackground(new Color(248, 249, 252));
                 card.setBorder(javax.swing.BorderFactory.createCompoundBorder(
                     javax.swing.BorderFactory.createLineBorder(new Color(220, 220, 230), 1, true),
-                    javax.swing.BorderFactory.createEmptyBorder(10, 14, 10, 14)
+                    javax.swing.BorderFactory.createEmptyBorder(8, 10, 8, 10)
                 ));
-                card.setPreferredSize(new Dimension(120, 110));
+                card.setPreferredSize(new Dimension(150, 150));
                 card.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
                 // Icon
@@ -277,14 +303,42 @@ public class client_ui extends javax.swing.JFrame {
                 lblIcon.setAlignmentX(Component.CENTER_ALIGNMENT);
 
                 // Ten file (rut gon neu qua dai)
-                String hienThi = tenfile.length() > 14 ? tenfile.substring(0, 12) + "..." : tenfile;
+                String hienThi = tenfile.length() > 18 ? tenfile.substring(0, 15) + "..." : tenfile;
                 JLabel lblTen = new JLabel(hienThi, SwingConstants.CENTER);
-                lblTen.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-                lblTen.setForeground(new Color(60, 60, 80));
+                lblTen.setFont(new Font("Segoe UI", Font.BOLD, 11));
+                lblTen.setForeground(new Color(40, 40, 60));
                 lblTen.setAlignmentX(Component.CENTER_ALIGNMENT);
-                lblTen.setToolTipText(tenfile); // Hover de xem ten day du
 
-                // Hover effect sang mau nhe
+                // Subtext 1: Danh muc
+                JLabel lblDM = new JLabel(danhmuc, SwingConstants.CENTER);
+                lblDM.setFont(new Font("Segoe UI", Font.ITALIC, 9));
+                lblDM.setForeground(new Color(100, 110, 140));
+                lblDM.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+                // Subtext 2: Kich thuoc & Luot tai
+                JLabel lblInfo = new JLabel(sizeStr + " • " + luotTai + " lượt tải", SwingConstants.CENTER);
+                lblInfo.setFont(new Font("Segoe UI", Font.PLAIN, 9));
+                lblInfo.setForeground(new Color(120, 120, 130));
+                lblInfo.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+                // Subtext 3: Tags (rut gon)
+                String tagsHienThi = tags.isEmpty() ? "Không tag" : (tags.length() > 18 ? tags.substring(0, 15) + "..." : tags);
+                JLabel lblTags = new JLabel("[" + tagsHienThi + "]", SwingConstants.CENTER);
+                lblTags.setFont(new Font("Segoe UI", Font.PLAIN, 9));
+                lblTags.setForeground(new Color(34, 139, 34)); // Mau xanh la
+                lblTags.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+                // Hover Tooltip (dung HTML de format)
+                String toolTip = "<html><body style='width: 200px; padding: 4px;'>"
+                        + "<b>Tài liệu:</b> " + tenfile + "<br>"
+                        + "<b>Danh mục:</b> " + danhmuc + "<br>"
+                        + "<b>Dung lượng:</b> " + sizeStr + "<br>"
+                        + "<b>Lượt tải:</b> " + luotTai + " lượt<br>"
+                        + "<b>Tags:</b> " + (tags.isEmpty() ? "Không có" : tags)
+                        + "</body></html>";
+                card.setToolTipText(toolTip);
+
+                // Hover effect sang mau nhe + click tai nhanh
                 card.addMouseListener(new java.awt.event.MouseAdapter() {
                     @Override public void mouseEntered(java.awt.event.MouseEvent e) {
                         card.setBackground(new Color(235, 238, 255));
@@ -292,11 +346,38 @@ public class client_ui extends javax.swing.JFrame {
                     @Override public void mouseExited(java.awt.event.MouseEvent e) {
                         card.setBackground(new Color(248, 249, 252));
                     }
+                    @Override public void mouseClicked(java.awt.event.MouseEvent e) {
+                        if (e.getClickCount() == 2) { // Double click de tai nhanh
+                            int xacNhan = JOptionPane.showConfirmDialog(null, 
+                                    "Bạn có muốn tải xuống tài liệu \"" + tenfile + "\" không?", 
+                                    "Tải Xuống Nhanh", 
+                                    JOptionPane.YES_NO_OPTION,
+                                    JOptionPane.QUESTION_MESSAGE);
+                            if (xacNhan == JOptionPane.YES_OPTION) {
+                                new Thread(() -> {
+                                    if (chucnang3.PhanLuong.laLocal()) {
+                                        chucnang3.KetNoiLocal.tai_xuong(tenfile, hienthi_tailieu);
+                                    } else {
+                                        ket_noi_tcp.tai_xuong(tenfile, hienthi_tailieu);
+                                    }
+                                    // Tu dong lam moi de cap nhat luot tai moi nhat
+                                    lamMoiDanhSach();
+                                }).start();
+                            }
+                        }
+                    }
                 });
 
                 card.add(lblIcon);
-                card.add(Box.createVerticalStrut(6));
+                card.add(Box.createVerticalStrut(4));
                 card.add(lblTen);
+                card.add(Box.createVerticalStrut(2));
+                card.add(lblDM);
+                card.add(Box.createVerticalStrut(2));
+                card.add(lblInfo);
+                card.add(Box.createVerticalStrut(2));
+                card.add(lblTags);
+
                 pn_danhsach.add(card);
             }
         }
