@@ -116,8 +116,19 @@ class luong_xu_ly_tcp extends Thread {
             // --------------------------------------------------
             else if (hanhdong.equals("laytat_danhmuc")) {
                 List<String> ds = new ArrayList<>();
+                // 1. Lay tu danh muc dang ky
                 for (Document doc : MongoKetNoi.layDanhMuc().find()) {
-                    ds.add(doc.getString("ten"));
+                    String ten = doc.getString("ten");
+                    if (ten != null && !ten.trim().isEmpty() && !ds.contains(ten)) {
+                        ds.add(ten);
+                    }
+                }
+                // 2. Quet them tu tai lieu da upload thuc te
+                for (Document doc : MongoKetNoi.layTaiLieu().find()) {
+                    String dm = doc.getString("danh_muc");
+                    if (dm != null && !dm.trim().isEmpty() && !ds.contains(dm)) {
+                        ds.add(dm);
+                    }
                 }
                 gui_di.writeUTF(String.join(";;", ds));
             }
@@ -127,8 +138,23 @@ class luong_xu_ly_tcp extends Thread {
             // --------------------------------------------------
             else if (hanhdong.equals("laytat_tag")) {
                 List<String> ds = new ArrayList<>();
+                // 1. Lay tu tag dang ky
                 for (Document doc : MongoKetNoi.layTag().find()) {
-                    ds.add(doc.getString("ten"));
+                    String ten = doc.getString("ten");
+                    if (ten != null && !ten.trim().isEmpty() && !ds.contains(ten)) {
+                        ds.add(ten);
+                    }
+                }
+                // 2. Quet them tu tai lieu da upload thuc te
+                for (Document doc : MongoKetNoi.layTaiLieu().find()) {
+                    List<String> tagsList = doc.getList("tags", String.class);
+                    if (tagsList != null) {
+                        for (String t : tagsList) {
+                            if (t != null && !t.trim().isEmpty() && !ds.contains(t)) {
+                                ds.add(t);
+                            }
+                        }
+                    }
                 }
                 gui_di.writeUTF(String.join(";;", ds));
             }
