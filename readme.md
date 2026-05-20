@@ -4,21 +4,22 @@
 
 ---
 
-## ✨ Tính Năng
+## ✨ Tính Năng Nổi Bật (Nhánh luongmoi)
 
 | Tính năng | Mô tả |
 |---|---|
 | 📤 **Upload tài liệu** | Hỗ trợ mọi định dạng (PDF, DOCX, XLSX, EXE...) — giới hạn 100 MB |
-| 📥 **Download tài liệu** | Tải file về máy với tốc độ byte streaming ổn định |
-| 🔍 **Tìm kiếm** | Tìm tài liệu theo tên, trả kết quả từ MongoDB |
-| 🏷️ **Danh mục & Tag** | Phân loại tài liệu khi upload, gợi ý tag tự động |
-| 📊 **Thống kê lượt tải** | Theo dõi lượt tải từng tài liệu, lưu vĩnh viễn trong MongoDB |
-| 📡 **Thông báo realtime** | Broadcast UDP — tất cả Client nhận thông báo ngay khi có tài liệu mới |
-| 🔔 **Kiểm tra kết nối** | Popup thông báo xanh/đỏ khi mở app — biết ngay Server có online không |
-| 🔀 **Tự động phân luồng** | Phát hiện server local tự động — không cần nhập IP khi chạy trên cùng máy |
-| 🖼️ **Giao diện icon** | Danh sách tài liệu hiển thị dạng icon card (kiểu File Explorer) |
-| 🌐 **Kết nối từ xa** | Hỗ trợ Radmin VPN / ZeroTier để kết nối qua Internet |
-| 🐳 **Docker Server** | Server chạy 24/7 trong container, deploy bằng 1 lệnh |
+| 📥 **Download tài liệu** | Tải file dạng byte streaming ổn định + **Kích đúp tải nhanh (Double-Click Quick Download)** trực tiếp từ màn hình Explorer. |
+| 🔍 **Tìm kiếm** | Tìm tài liệu theo tên, hiển thị kết quả thời gian thực từ MongoDB. |
+| 🏷️ **Danh mục & Tag** | Phân loại khi upload, gợi ý tag tự động, thẻ tag xanh lá cây hiện thị trực quan trên card. |
+| 📊 **Thống kê lượt tải** | Theo dõi lượt tải, lưu vĩnh viễn trong MongoDB, tự cập nhật lượt tải ngay sau khi download thành công. |
+| 📡 **Đồng bộ Real-time 100%** | Tự động cập nhật giao diện thời gian thực trên TẤT CẢ các máy Client trong mạng LAN/VPN nhờ UDP Multicast ngay khi có người upload file mới. |
+| 🔔 **Kiểm tra kết nối** | Popup thông báo xanh/đỏ khi mở app — hiển thị rõ chế độ Local/LAN giúp giám sát kết nối tức thì. |
+| 🔀 **Xác nhận kết nối thông minh** | Client tự phát hiện server local nhưng **luôn mở hộp thoại hỏi ý kiến** người dùng (YES chọn Local, NO mở bảng nhập IP LAN / Radmin VPN để test mạng). |
+| 🩹 **RMI Tự chữa lành (Self-healing)** | Server tự quét danh sách card mạng. Nếu IP Radmin trong `.env` bị tắt/offline, Server tự động **fallback RMI về localhost** giúp test nội bộ không bao giờ bị lỗi `Connection refused`. |
+| 🖼️ **Giao diện icon premium** | File Explorer card lưới 150x150 cực đẹp, tooltip HTML sinh động, JList HTML 2 dòng cao cấp ở cửa sổ phụ. |
+| 🌐 **Kết nối từ xa hoàn hảo** | Ghim cố định RMI và dữ liệu trên **cổng 1099** thông qua `super(1099)`, giải quyết triệt để lỗi chặn cổng ngẫu nhiên qua Radmin VPN. |
+| 🐳 **Docker Server** | Server chạy 24/7 trong container, deploy nhanh chóng bằng 1 lệnh. |
 
 ---
 

@@ -119,27 +119,33 @@ Server xử lý:
       → Trả về: "BaiTapJava.pdf;;LyThuyetJava.docx;;"
 ```
 
-### 3.3 Cơ Chế Byte Streaming — Bí Quyết Giữ Nguyên Định Dạng File
+### 3.3 Cơ Chế Byte Streaming — Bí Quyết Bảo Toàn Định Dạng File 100%
 
-> **Đây là cơ chế quan trọng nhất**, giải thích vì sao file PDF, DOCX, PNG, EXE... đều được truyền đi hoàn hảo, không bị hỏng.
+> ❓ **Câu hỏi của người dùng:** *"Nếu máy tôi tải tài liệu từ máy khác up lên nó có trả lại đúng tài liệu đó không? Nó kiểu như là cơ chế byte gì đó hả?"*
 
-**Bản chất:** Mọi file máy tính đều chỉ là một chuỗi byte số (0 và 1). Hệ thống **không hiểu và không chỉnh sửa nội dung** — chỉ đơn giản copy nguyên xi chuỗi byte đó qua mạng.
+**CÂU TRẢ LỜI:** **Có, hoàn toàn chính xác 100%.** Tài liệu tải về sẽ giống hệt file gốc ban đầu đến từng bit, không bị lỗi font, không bị hỏng cấu trúc (corrupt). Bí quyết nằm ở cơ chế **Byte Streaming (luồng byte nhị phân)**.
+
+#### Bản chất kỹ thuật:
+1. **Mọi file trên máy tính đều là Byte:** Dù là PDF, DOCX, PNG, ZIP, hay file chạy EXE, bản chất nhị phân của chúng chỉ là một chuỗi các con số byte (giá trị từ `-128` đến `127`).
+2. **Không diễn dịch nội dung:** Hệ thống mạng không mở file ra đọc chữ hay phân tích định dạng, mà nó coi file là một chuỗi nhị phân thuần túy. Nó bê nguyên chuỗi số đó từ ổ cứng bên gửi đặt sang ổ cứng bên nhận.
+3. **Truyền theo chunk (mảnh nhỏ) 4KB:** 
+   * Nếu nạp cả file 100MB vào bộ nhớ (RAM) rồi gửi đi một lúc, máy tính sẽ lập tức bị quá tải RAM (OutOfMemoryError).
+   * Thay vào đó, hệ thống sử dụng một bộ đệm **`byte[] buffer = new byte[4096]` (4 Kilobytes)** trong [truyen_tai_file.java](file:///a:/code%20javanetbean/Baitaplon_Nhom7/src/chucnang/truyen_tai_file.java).
 
 ```
-[Server đọc file]                      [Client ghi file]
-                    ← mạng TCP →
-FileInputStream                        FileOutputStream
-  │                                          │
-  ├── Đọc 4096 byte (chunk 1)  ──────►  Ghi 4096 byte
-  ├── Đọc 4096 byte (chunk 2)  ──────►  Ghi 4096 byte
-  ├── ...                               ...
-  └── Đọc 512 byte  (chunk N)  ──────►  Ghi 512 byte
-                                              │
-                                         File hoàn chỉnh
-                                         = 100% giống gốc
+[Máy Gửi (Đọc File)]                 [Đường Truyền Mạng]                [Máy Nhận (Ghi File)]
+FileInputStream (File vật lý) ------> Socket OutputStream (TCP) ------> FileOutputStream (Ghi xuống đĩa)
+      │                                       │                                       │
+      ├── Đọc 4096 byte ──────────────────────┼───────────────────────────────► Ghi 4096 byte
+      ├── Đọc 4096 byte ──────────────────────┼───────────────────────────────► Ghi 4096 byte
+      ├── ... (lặp đi lặp lại)                │                                       ...
+      └── Đọc 512 byte (mảnh cuối) ───────────┼───────────────────────────────► Ghi 512 byte
+                                                                                      │
+                                                                           File hoàn toàn khớp 100%
+                                                                           (MD5 Hash trùng tuyệt đối)
 ```
 
-**Tại sao chunk 4KB?** Nếu đọc cả file vào RAM một lần (ví dụ file 1GB) → tràn bộ nhớ. Chia nhỏ 4KB → RAM luôn chỉ dùng vài KB, truyền file vô hạn kích thước.
+Nhờ cơ chế này, tốc độ truyền đạt hiệu suất cao, bộ nhớ RAM tiêu thụ luôn cố định cực nhỏ (chỉ vài KB), và tính toàn vẹn dữ liệu được đảm bảo tuyệt đối qua giao thức TCP hướng kết nối tin cậy.
 
 ### 3.4 Giao Thức UDP — Port 9999 (Thông Báo Realtime)
 
@@ -162,7 +168,7 @@ Khi có file mới upload:
 
 **Tại sao không dùng TCP cho thông báo?** TCP cần thiết lập kết nối riêng với từng Client (handshake 3 bước). UDP broadcast chỉ cần 1 gói tin → đến tất cả mọi người cùng lúc.
 
-### 3.5 Giao Thức RMI — Port 1099 (Quản Trị Từ Xa)
+### 3.5 Giao Thức RMI — Port 1099 (Quản Trị Từ Xa & Giải pháp Tự Chữa Lành)
 
 > **RMI (Remote Method Invocation)** cho phép Client gọi hàm Java trên Server như thể gọi hàm bình thường trong cùng một chương trình.
 
@@ -179,24 +185,45 @@ public String thongke_luottai() throws RemoteException {
 ```
 
 **Chức năng RMI trong hệ thống:**
-- Thêm danh mục tài liệu mới
-- Thêm tag tìm kiếm
-- Thống kê tổng lượt tải theo từng file (từ MongoDB)
+* Thêm danh mục tài liệu mới.
+* Thêm tag tìm kiếm gợi ý.
+* Thống kê tổng lượt tải theo từng file thực tế từ MongoDB.
 
-### 3.6 MongoDB — Lưu Trữ Metadata Vĩnh Viễn
+#### 🩹 Giải Quyết Lỗi RMI VPN & Tường Lửa (Self-Healing Connection):
+Trong thực tế phát triển, Java RMI nổi tiếng là giao thức "khó tính" vì:
+1. **Lỗi cổng ngẫu nhiên (Ephemeral Ports):** Mặc dù RMI Registry chạy trên cổng `1099`, nhưng khi xuất Stub RMI qua `super()`, JVM tự động mở một cổng ngẫu nhiên khác để truyền dữ liệu. Cổng này ngay lập tức bị Windows Firewall hoặc Docker Container chặn đứng!
+   * 👉 *Khắc phục:* Chuyển constructor sang `super(1099)` để ghim toàn bộ luồng RMI chung cổng `1099`.
+2. **Lỗi RMI Hostname (Connection Refused):** Khi máy chủ đăng ký RMI bằng IP VPN ảo (ví dụ Radmin `26.18.244.131`), nếu người dùng tắt Radmin hoặc chạy thử nội bộ (Localhost), máy trạm không thể kết nối tới IP này.
+   * 👉 *Khắc phục:* Cập nhật logic tự phục hồi tại [chay_may_chu.java](file:///a:/code%20javanetbean/Baitaplon_Nhom7/src/may_chu/chay_may_chu.java). Server tự động quét qua toàn bộ các Card mạng (Network Interfaces) đang mở. Nếu phát hiện IP VPN offline, nó tự động hạ cấp (**fallback RMI hostname sang `localhost`**) để nhà phát triển kiểm thử local trơn tru mà không cần chỉnh cấu hình thủ công.
 
-> **Vấn đề trước khi có MongoDB:** Server lưu danh mục, tag, lượt tải trên RAM → tắt Server là mất sạch.
->
-> **Giải pháp:** MongoDB lưu vĩnh viễn trên ổ cứng, Server tắt rồi bật lại dữ liệu vẫn còn đầy đủ.
+### 3.6 MongoDB — Lưu Trữ Metadata Vĩnh Viễn & Mô Hình 3 Lớp (3-Tier)
 
-**Phân chia nhiệm vụ:**
+> ❓ **Câu hỏi của người dùng:** *"Tạo sao hệ thống có thể lưu dữ liệu vào MongoDB của máy chủ nếu Client gửi từ một máy khách khác ở rất xa?"*
+
+**CÂU TRẢ LỜI:** Client **không hề** kết nối trực tiếp đến database MongoDB trên Server. Toàn bộ kiến trúc được xây dựng theo mô hình phân tán **3 lớp (3-Tier Distributed Architecture)**:
+
+```
+┌────────────────────────┐              ┌────────────────────────┐              ┌────────────────────────┐
+│   LỚP 1: CLIENT APP   │  TCP / RMI   │  LỚP 2: SERVER APP     │   localhost   │   LỚP 3: MONGODB DB    │
+│  (Mở ở nhà/lớp học...) ├─────────────►│  (Chạy 24/7 trên Docker)├─────────────►│ (Chạy khép kín bên trong)│
+│                        │              │                        │              │  Port: 27020           │
+└────────────────────────┘              └────────────────────────┘              └────────────────────────┘
+```
+
+1. **Lớp 1 (Client UI):** Người dùng nhập thông tin danh mục, tag hoặc upload tài liệu. Client đóng gói thông tin này và truyền qua cổng **8888 (TCP)** hoặc **1099 (RMI)** thông qua địa chỉ IP Radmin VPN của Server.
+2. **Lớp 2 (Server App):** Server nhận gói tin mạng qua VPN, giải mã dữ liệu, lưu file vật lý vào ổ đĩa. Sau đó, Server đóng vai trò là "người trung gian" tin cậy để đại diện Client thực hiện kết nối cơ sở dữ liệu.
+3. **Lớp 3 (MongoDB Database):** Do MongoDB được cấu hình chạy an toàn trên `localhost:27020` của máy chủ (được cô lập bảo mật), Server trung gian ở Lớp 2 dễ dàng ghi bản ghi mới vào cơ sở dữ liệu thông qua MongoDB Java Driver. 
+
+Mô hình 3 lớp này giúp hệ thống đạt độ bảo mật tuyệt đối: MongoDB không bao giờ phải mở cổng ra ngoài Internet công cộng, ngăn chặn hoàn toàn nguy cơ bị hacker tấn công trực diện.
+
+#### Phân chia nhiệm vụ lưu trữ:
 
 | Lưu ở đâu | Lưu cái gì | Lý do |
 |---|---|---|
-| Ổ cứng Server (`upload/`) | File vật lý (PDF, DOCX...) | File nặng, không nên nhét vào DB |
-| MongoDB collection `tai_lieu` | Metadata của file | Tìm kiếm nhanh, thống kê dễ |
-| MongoDB collection `danh_muc` | Danh sách danh mục | Vĩnh viễn, không mất khi restart |
-| MongoDB collection `tag` | Danh sách tag gợi ý | Vĩnh viễn, không mất khi restart |
+| Ổ cứng Server (`upload/`) | File vật lý (PDF, DOCX...) | File nặng, không nên nhét trực tiếp vào Database để tránh phình dung lượng. |
+| MongoDB collection `tai_lieu` | Metadata của file | Lưu thông tin mô tả, tags, kích thước để phục vụ tìm kiếm siêu tốc và thống kê. |
+| MongoDB collection `danh_muc` | Danh sách danh mục | Bảo toàn danh sách vĩnh viễn, không mất khi Server tắt/reboot. |
+| MongoDB collection `tag` | Danh sách tag gợi ý | Bảo toàn danh sách vĩnh viễn, không mất khi Server tắt/reboot. |
 
 **Cấu trúc document MongoDB khi upload file:**
 ```json
