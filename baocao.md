@@ -195,6 +195,8 @@ Trong thực tế phát triển, Java RMI nổi tiếng là giao thức "khó t�
    * 👉 *Khắc phục:* Chuyển constructor sang `super(1099)` để ghim toàn bộ luồng RMI chung cổng `1099`.
 2. **Lỗi RMI Hostname (Connection Refused):** Khi máy chủ đăng ký RMI bằng IP VPN ảo (ví dụ Radmin `26.18.244.131`), nếu người dùng tắt Radmin hoặc chạy thử nội bộ (Localhost), máy trạm không thể kết nối tới IP này.
    * 👉 *Khắc phục:* Cập nhật logic tự phục hồi tại [chay_may_chu.java](file:///a:/code%20javanetbean/Baitaplon_Nhom7/src/may_chu/chay_may_chu.java). Server tự động quét qua toàn bộ các Card mạng (Network Interfaces) đang mở. Nếu phát hiện IP VPN offline, nó tự động hạ cấp (**fallback RMI hostname sang `localhost`**) để nhà phát triển kiểm thử local trơn tru mà không cần chỉnh cấu hình thủ công.
+3. **Giới Hạn Băng Thông Container Docker (Docker Boundary Bypass):** Khi máy chủ (Server) chạy trong môi trường ảo hóa Docker Container, máy ảo Linux Linux của Docker không có quyền truy cập trực tiếp các card mạng của máy chủ vật lý Windows bên ngoài. Do đó, việc quét card mạng vật lý sẽ không thấy IP Radmin VPN (mặc dù cổng 1099 vẫn được port-forward thành công).
+   * 👉 *Khắc phục:* Bổ sung cơ chế kiểm tra sự tồn tại của file `/.dockerenv`. Nếu phát hiện đang chạy bên trong Docker Container, máy chủ sẽ tự động tin tưởng gán `java.rmi.server.hostname` theo đúng biến cấu hình `RMI_HOSTNAME` của file `.env` mà không thực hiện hạ cấp về localhost. Điều này giúp các máy trạm ngoài LAN/VPN kết nối vào RMI trơn tru.
 
 ### 3.6 MongoDB — Lưu Trữ Metadata Vĩnh Viễn & Mô Hình 3 Lớp (3-Tier)
 
@@ -211,6 +213,8 @@ Trong thực tế phát triển, Java RMI nổi tiếng là giao thức "khó t�
 ```
 
 1. **Lớp 1 (Client UI):** Người dùng nhập thông tin danh mục, tag hoặc upload tài liệu. Client đóng gói thông tin này và truyền qua cổng **8888 (TCP)** hoặc **1099 (RMI)** thông qua địa chỉ IP Radmin VPN của Server.
+   * **[NÂNG CẤP DYNAMIC RMI]:** Popup tải lên tài liệu (`GiaoDienChonTag.java`) không còn sử dụng danh sách tĩnh nữa. Khi khởi tạo, nó tự động thực hiện cuộc gọi RMI đến các hàm `quanly_danhmuc("laytat")` và `quanly_tag("laytat")` trên Server. Lớp 2 (Server App) sẽ truy vấn nhanh toàn bộ danh mục và các thẻ tag gợi ý hiện có trong MongoDB (Lớp 3) để hiển thị trực tiếp lên ComboBox và nút gợi ý trên Client một cách động 100%!
+   * Thêm hai nút quản trị mới "Xem danh mục" và "Xem tag gợi ý" trực tiếp trên màn hình chính RMI JTextArea để phục vụ kiểm thử dữ liệu thực tế MongoDB từ xa.
 2. **Lớp 2 (Server App):** Server nhận gói tin mạng qua VPN, giải mã dữ liệu, lưu file vật lý vào ổ đĩa. Sau đó, Server đóng vai trò là "người trung gian" tin cậy để đại diện Client thực hiện kết nối cơ sở dữ liệu.
 3. **Lớp 3 (MongoDB Database):** Do MongoDB được cấu hình chạy an toàn trên `localhost:27020` của máy chủ (được cô lập bảo mật), Server trung gian ở Lớp 2 dễ dàng ghi bản ghi mới vào cơ sở dữ liệu thông qua MongoDB Java Driver. 
 

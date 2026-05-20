@@ -219,9 +219,11 @@ Kiểm tra localhost:8888
 ### Tab **Chức Năng RMI**
 | Nút | Chức năng |
 |---|---|
-| **Quản lý danh mục** | Thêm danh mục mới vào MongoDB |
-| **Quản lý tag** | Thêm tag gợi ý mới vào MongoDB |
-| **Thống kê lượt tải** | Xem tổng lượt tải của từng tài liệu |
+| **Quản lý danh mục** | Nhập tên để thêm danh mục mới vào MongoDB |
+| **Quản lý tag** | Nhập tên để thêm tag gợi ý mới vào MongoDB |
+| **Thống kê lượt tải** | Xem tổng lượt tải của từng tài liệu (truy vấn MongoDB) |
+| **Xem danh mục** | **[NEW]** Hiển thị toàn bộ danh mục thực tế đang có trong MongoDB |
+| **Xem tag gợi ý** | **[NEW]** Hiển thị toàn bộ tag gợi ý thực tế đang có trong MongoDB |
 
 ---
 
