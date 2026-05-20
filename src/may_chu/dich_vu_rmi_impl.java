@@ -123,4 +123,29 @@ public class dich_vu_rmi_impl extends UnicastRemoteObject implements dich_vu_rmi
         // Goi an khi khong biet ten file - chi tang tong chung
         System.out.println("[MongoDB] tang_luottai() duoc goi ma khong biet ten file.");
     }
+
+    // =========================================================
+    // DANH GIA TAI LIEU
+    // =========================================================
+    @Override
+    public String danhgia_tailieu(String tenfile, int soSao) throws java.rmi.RemoteException {
+        try {
+            MongoKetNoi.layTaiLieu().updateOne(
+                Filters.eq("ten_file", tenfile),
+                Updates.combine(
+                    Updates.inc("tong_diem_danh_gia", (long) soSao),
+                    Updates.inc("so_luot_danh_gia", 1L)
+                )
+            );
+            System.out.println("[MongoDB] Da luu danh gia " + soSao + " sao cho: " + tenfile);
+            
+            // Phat UDP broadcast de thong bao cap nhat realtime cho cac client
+            may_chu_udp.phat_thongbao("RATING|" + tenfile);
+            
+            return "Đánh giá " + soSao + " sao thành công cho tài liệu \"" + tenfile + "\"";
+        } catch (Exception loi) {
+            System.out.println("[MongoDB] loi danhgia_tailieu: " + loi.getMessage());
+            return "Lỗi: " + loi.getMessage();
+        }
+    }
 }

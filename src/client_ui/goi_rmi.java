@@ -91,4 +91,15 @@ public class goi_rmi {
             hienthi.append("loi goi rmi: " + loi.getMessage() + "\n");
         }
     }
+
+    // goi ham danh gia tai lieu
+    public static String danhgia_tailieu(String rmiHost, String tenfile, int soSao) {
+        try {
+            Registry quanly_rmi = LocateRegistry.getRegistry(rmiHost, 1099);
+            dich_vu_rmi dichvu = (dich_vu_rmi) quanly_rmi.lookup("dichvurmi");
+            return dichvu.danhgia_tailieu(tenfile, soSao);
+        } catch (Exception loi) {
+            return "Lỗi gọi RMI đánh giá: " + loi.getMessage();
+        }
+    }
 }

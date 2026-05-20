@@ -15,4 +15,7 @@ public interface dich_vu_rmi extends Remote {
     // ham thong ke luot tai xuong
     public String thongke_luottai() throws RemoteException;
     
+    // ham danh gia tai lieu
+    public String danhgia_tailieu(String tenfile, int soSao) throws RemoteException;
+    
 }

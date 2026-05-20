@@ -412,13 +412,17 @@ public class client_ui extends javax.swing.JFrame {
             pn_danhsach.add(lbl);
         } else {
             for (String item : danhsach) {
-                // Item dang: tenfile|size|category|tags|downloads
+                // Item dang: tenfile|size|category|tags|downloads|tongDiem|soLuot
                 String[] parts = item.split("\\|");
                 String tenfile = parts[0];
                 long size = parts.length > 1 ? Long.parseLong(parts[1]) : 0;
                 String danhmuc = parts.length > 2 ? parts[2] : "Khác";
                 String tags = parts.length > 3 ? parts[3] : "";
                 long luotTai = parts.length > 4 ? Long.parseLong(parts[4]) : 0;
+                long tongDiem = parts.length > 5 ? Long.parseLong(parts[5]) : 0;
+                long soLuot = parts.length > 6 ? Long.parseLong(parts[6]) : 0;
+
+                double trungBinh = soLuot > 0 ? (double) tongDiem / soLuot : 0.0;
 
                 // Dinh dang dung luong
                 String sizeStr;
@@ -459,15 +463,16 @@ public class client_ui extends javax.swing.JFrame {
                 lblDM.setAlignmentX(Component.CENTER_ALIGNMENT);
 
                 // Subtext 2: Kich thuoc & Luot tai
-                JLabel lblInfo = new JLabel(sizeStr + " • " + luotTai + " lượt tải", SwingConstants.CENTER);
+                JLabel lblInfo = new JLabel(sizeStr + " • " + luotTai + " tải", SwingConstants.CENTER);
                 lblInfo.setFont(new Font("Segoe UI", Font.PLAIN, 9));
                 lblInfo.setForeground(new Color(120, 120, 130));
                 lblInfo.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-                // Subtext 3: Tags (rut gon)
+                // Subtext 3: Rating & Tags (xanh la)
                 String tagsHienThi = tags.isEmpty() ? "Không tag" : (tags.length() > 18 ? tags.substring(0, 15) + "..." : tags);
-                JLabel lblTags = new JLabel("[" + tagsHienThi + "]", SwingConstants.CENTER);
-                lblTags.setFont(new Font("Segoe UI", Font.PLAIN, 9));
+                String ratingText = soLuot > 0 ? String.format("%.1f★", trungBinh) : "Chưa đánh giá";
+                JLabel lblTags = new JLabel(ratingText + " • [" + tagsHienThi + "]", SwingConstants.CENTER);
+                lblTags.setFont(new Font("Segoe UI", Font.BOLD, 9));
                 lblTags.setForeground(new Color(34, 139, 34)); // Mau xanh la
                 lblTags.setAlignmentX(Component.CENTER_ALIGNMENT);
 
@@ -477,17 +482,73 @@ public class client_ui extends javax.swing.JFrame {
                         + "<b>Danh mục:</b> " + danhmuc + "<br>"
                         + "<b>Dung lượng:</b> " + sizeStr + "<br>"
                         + "<b>Lượt tải:</b> " + luotTai + " lượt<br>"
-                        + "<b>Tags:</b> " + (tags.isEmpty() ? "Không có" : tags)
+                        + "<b>Đánh giá:</b> " + (soLuot > 0 ? String.format("%.1f/5 ★ (%d lượt)", trungBinh, soLuot) : "Chưa có đánh giá") + "<br>"
+                        + "<b>Tags:</b> " + (tags.isEmpty() ? "Không có" : tags) + "<br>"
+                        + "<hr><i style='color: gray;'>Double click để tải nhanh • Click chuột phải để đánh giá</i>"
                         + "</body></html>";
                 card.setToolTipText(toolTip);
 
-                // Hover effect sang mau nhe + click tai nhanh
+                // Menu chuot phai (Popup menu) cho tung card
+                JPopupMenu popup = new JPopupMenu();
+                
+                JMenuItem itemTai = new JMenuItem("Tải xuống tài liệu");
+                itemTai.addActionListener(evt -> {
+                    new Thread(() -> {
+                        if (chucnang3.PhanLuong.laLocal()) {
+                            chucnang3.KetNoiLocal.tai_xuong(tenfile, hienthi_tailieu);
+                        } else {
+                            ket_noi_tcp.tai_xuong(tenfile, hienthi_tailieu);
+                        }
+                        lamMoiDanhSach();
+                    }).start();
+                });
+                popup.add(itemTai);
+                
+                JMenuItem itemDanhGia = new JMenuItem("Đánh giá tài liệu");
+                itemDanhGia.addActionListener(evt -> {
+                    String[] options = {"5 Sao (Tuyệt vời)", "4 Sao (Tốt)", "3 Sao (Bình thường)", "2 Sao (Tạm được)", "1 Sao (Tệ)"};
+                    String chon = (String) JOptionPane.showInputDialog(null, 
+                            "Chọn mức độ đánh giá cho tài liệu \"" + tenfile + "\":", 
+                            "Đánh Giá Tài Liệu", 
+                            JOptionPane.QUESTION_MESSAGE, 
+                            null, 
+                            options, 
+                            options[0]);
+                    
+                    if (chon != null) {
+                        int sao = 5 - java.util.Arrays.asList(options).indexOf(chon);
+                        new Thread(() -> {
+                            try {
+                                String result;
+                                String rmiHost = chucnang3.PhanLuong.laLocal() ? "localhost" : CauHinh.SERVER_IP;
+                                result = goi_rmi.danhgia_tailieu(rmiHost, tenfile, sao);
+                                JOptionPane.showMessageDialog(null, result, "Thông Báo", JOptionPane.INFORMATION_MESSAGE);
+                                lamMoiDanhSach();
+                            } catch (Exception ex) {
+                                JOptionPane.showMessageDialog(null, "Lỗi đánh giá: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                            }
+                        }).start();
+                    }
+                });
+                popup.add(itemDanhGia);
+
+                // Hover effect sang mau nhe + click tai nhanh / click chuot phai
                 card.addMouseListener(new java.awt.event.MouseAdapter() {
                     @Override public void mouseEntered(java.awt.event.MouseEvent e) {
                         card.setBackground(new Color(235, 238, 255));
                     }
                     @Override public void mouseExited(java.awt.event.MouseEvent e) {
                         card.setBackground(new Color(248, 249, 252));
+                    }
+                    @Override public void mousePressed(java.awt.event.MouseEvent e) {
+                        if (e.isPopupTrigger()) {
+                            popup.show(e.getComponent(), e.getX(), e.getY());
+                        }
+                    }
+                    @Override public void mouseReleased(java.awt.event.MouseEvent e) {
+                        if (e.isPopupTrigger()) {
+                            popup.show(e.getComponent(), e.getX(), e.getY());
+                        }
                     }
                     @Override public void mouseClicked(java.awt.event.MouseEvent e) {
                         if (e.getClickCount() == 2) { // Double click de tai nhanh

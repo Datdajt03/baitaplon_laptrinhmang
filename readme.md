@@ -13,7 +13,8 @@
 | 🔍 **Tìm kiếm** | Tìm tài liệu theo tên, hiển thị kết quả thời gian thực từ MongoDB. |
 | 🏷️ **Danh mục & Tag** | Phân loại khi upload, gợi ý tag tự động, thẻ tag xanh lá cây hiện thị trực quan trên card. |
 | 📊 **Thống kê lượt tải** | Theo dõi lượt tải, lưu vĩnh viễn trong MongoDB, tự cập nhật lượt tải ngay sau khi download thành công. |
-| 📡 **Đồng bộ Real-time 100%** | Tự động cập nhật giao diện thời gian thực trên TẤT CẢ các máy Client trong mạng LAN/VPN nhờ UDP Multicast ngay khi có người upload file mới. |
+| ⭐ **Đánh giá tài liệu** | **[NEW]** Đánh giá 1-5 sao bằng RMI, hiển thị trung bình sao trực quan trên card, tự động đồng bộ thời gian thực qua UDP. |
+| 📡 **Đồng bộ Real-time 100%** | Tự động cập nhật giao diện thời gian thực trên TẤT CẢ các máy Client trong mạng LAN/VPN nhờ UDP Multicast ngay khi có người upload hoặc đánh giá file mới. |
 | 🔔 **Kiểm tra kết nối** | Popup thông báo xanh/đỏ khi mở app — hiển thị rõ chế độ Local/LAN giúp giám sát kết nối tức thì. |
 | 🔀 **Xác nhận kết nối thông minh** | Client tự phát hiện server local nhưng **luôn mở hộp thoại hỏi ý kiến** người dùng (YES chọn Local, NO mở bảng nhập IP LAN / Radmin VPN để test mạng). |
 | 🩹 **RMI Tự chữa lành (Self-healing)** | Server tự quét danh sách card mạng. Nếu IP Radmin trong `.env` bị tắt/offline, Server tự động **fallback RMI về localhost** giúp test nội bộ không bao giờ bị lỗi `Connection refused`. |

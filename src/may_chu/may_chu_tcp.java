@@ -99,7 +99,19 @@ class luong_xu_ly_tcp extends Thread {
                             luotTai = ((Number) ltObj).longValue();
                         }
 
-                        String info = tenFile + "|" + kichThuoc + "|" + danhmuc + "|" + tags + "|" + luotTai;
+                        long tongDiem = 0;
+                        Object tdObj = doc.get("tong_diem_danh_gia");
+                        if (tdObj instanceof Number) {
+                            tongDiem = ((Number) tdObj).longValue();
+                        }
+
+                        long soLuot = 0;
+                        Object slObj = doc.get("so_luot_danh_gia");
+                        if (slObj instanceof Number) {
+                            soLuot = ((Number) slObj).longValue();
+                        }
+
+                        String info = tenFile + "|" + kichThuoc + "|" + danhmuc + "|" + tags + "|" + luotTai + "|" + tongDiem + "|" + soLuot;
                         ketqua.add(info);
                     }
                 }
