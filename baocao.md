@@ -362,7 +362,40 @@ docker-compose up -d --build
 
 ---
 
-## 6. Các Công Nghệ Sử Dụng
+## 6. Phân Tích Lỗi Thực Tế & Giải Pháp Tối Ưu (Case Study: Race Condition)
+
+Trong quá trình vận hành hệ thống phân tán, nhóm phát triển đã phát hiện và xử lý thành công một lỗi bất đồng bộ kinh điển liên quan đến hiệu năng mạng và đồng bộ trạng thái cơ sở dữ liệu.
+
+### 🛑 Hiện tượng lỗi (Sự cố mất đồng bộ số lượt tải):
+* Khi Client thực hiện tải xuống một tài liệu thành công, giao diện Client chính lập tức gọi hàm tự động làm mới `lamMoiDanhSach()` để cập nhật số lượt tải hiển thị trên màn hình.
+* Tuy nhiên, **số lượt tải trên UI vẫn giữ nguyên giá trị cũ**. Chỉ khi người dùng bấm nút **Làm mới** thủ công một vài giây sau đó, lượt tải mới hiển thị đúng.
+* Kiểm tra trực tiếp Database MongoDB tại thời điểm xảy ra sự cố: Lượt tải **đã được cập nhật tăng +1 thành công**.
+
+### 🔍 Phân tích nguyên nhân (Race Condition):
+Do Client sử dụng luồng bất đồng bộ (Thread) để tải file nhằm tránh đóng băng UI. Quy trình truyền tin diễn ra như sau:
+1. Client gửi lệnh `taixuong|tenfile` qua socket TCP.
+2. Server ban đầu xử lý theo trình tự tuyến tính:
+   * **Bước A:** Đọc file vật lý và truyền luồng byte dữ liệu qua TCP (`truyen_tai_file.gui_file`).
+   * **Bước B:** Gọi RMI đến Database MongoDB để thực hiện câu lệnh tăng lượt tải (`dichvu_rmi.tang_luottai`).
+3. Vì kích thước file nhỏ hoặc băng thông luồng đệm (Network Buffer) của TCP cực cao, luồng nhận dữ liệu của Client hoàn tất việc đọc byte từ card mạng và kết thúc tiến trình nhận file **trước khi luồng xử lý của Server chạy đến Bước B** (ghi dữ liệu vào MongoDB).
+4. Ngay khi nhận file xong, Client lập tức khởi chạy một kết nối TCP mới gửi lệnh `timkiem` để quét lại dữ liệu metadata vẽ lên UI. Kết nối này đến Server trước khi giao dịch ghi lượt tải ở Bước B hoàn tất. Dẫn đến Client vẽ UI bằng giá trị cũ trong MongoDB.
+
+```
+TIẾN TRÌNH SERVER: ───[Gửi File qua TCP]───────► [Ghi Lượt Tải MongoDB] ───► (Hoàn tất ghi)
+                                                     ▲
+                                   Gây ra tranh chấp │ (Truy vấn lúc này vẫn lấy lượt tải cũ)
+                                                     │
+TIẾN TRÌNH CLIENT: ───[Nhận File xong]───► [Gửi Lệnh TimKiem vẽ lại UI] ───► (Vẽ UI cũ)
+```
+
+### 🩹 Giải pháp khắc phục tối ưu:
+Nhóm đã tiến hành tái cấu trúc lại trình tự thực hiện tại file [may_chu_tcp.java](file:///a:/code%20javanetbean/Baitaplon_Nhom7/src/may_chu/may_chu_tcp.java):
+* **Đảo ngược logic xử lý:** Server thực hiện **Tăng lượt tải trong MongoDB trước** (`dichvu_rmi.tang_luottai`), sau đó mới **Truyền dữ liệu file qua TCP** (`truyen_tai_file.gui_file`).
+* **Hiệu quả:** Trong suốt thời gian file được truyền tải trên đường truyền vật lý (dù chỉ mất vài mili-giây), dữ liệu trong MongoDB đã được cập nhật thành công từ trước. Do đó, ngay khi Client tải xong file và kích hoạt lệnh refresh UI, dữ liệu tải về hiển thị chắc chắn là dữ liệu mới nhất, đảm bảo tính realtime đồng bộ 100%!
+
+---
+
+## 7. Các Công Nghệ Sử Dụng
 
 | Công nghệ | Phiên bản | Mục đích |
 |---|---|---|
