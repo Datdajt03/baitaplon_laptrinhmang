@@ -1,5 +1,6 @@
-package client_ui;
+package chucnang3;
 
+import client_ui.CauHinh;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -8,36 +9,46 @@ import javax.swing.JOptionPane;
 import javax.swing.JTextArea;
 
 /**
- * Lop xu ly ket noi TCP voi may chu (CHE DO LAN).
- * Che do local su dung chucnang3.KetNoiLocal thay the.
+ * Ket noi TCP danh rieng cho che do LOCAL.
+ * Luon ket noi toi localhost:8888, khong bao gio thu ket noi LAN.
  *
- * Giao thuc lenh (phan cach bang '|'):
+ * Giao thuc lenh giong voi ket_noi_tcp goc (phan cach bang '|'):
  *   timkiem | tukhoa
  *   tailen  | tenfile | dungluong | danhmuc | tags
  *   taixuong| tenfile
  */
-public class ket_noi_tcp {
+public class KetNoiLocal {
 
-    // Ham tim kiem - hien thi vao JTextArea
+    private static final String LOCAL_IP = "localhost";
+    private static final int    LOCAL_PORT = 8888;
+
+    // Gioi han kich thuoc file toi da cho phep upload: 100 MB
+    private static final long GIOI_HAN_BYTES = 100L * 1024 * 1024;
+
+    /**
+     * Tim kiem tai lieu - hien thi vao JTextArea.
+     */
     public static void tim_kiem(String tukhoa, JTextArea hienthi) {
         try {
-            Socket mang = new Socket(CauHinh.SERVER_IP, 8888);
+            Socket mang = new Socket(LOCAL_IP, LOCAL_PORT);
             DataOutputStream gui_di  = new DataOutputStream(mang.getOutputStream());
             DataInputStream  nhan_ve = new DataInputStream(mang.getInputStream());
 
             gui_di.writeUTF("timkiem|" + tukhoa);
             String ketqua = nhan_ve.readUTF();
-            hienthi.append("Ket qua tim kiem: " + ketqua + "\n");
+            hienthi.append("Ket qua tim kiem (local): " + ketqua + "\n");
             mang.close();
         } catch (Exception loi) {
-            hienthi.append("Loi ket noi tcp: " + loi.getMessage() + "\n");
+            hienthi.append("Loi ket noi local: " + loi.getMessage() + "\n");
         }
     }
 
-    // Ham tim kiem tra ve mang de hien thi tren danh sach UI
+    /**
+     * Tim kiem tra ve mang String de hien thi tren danh sach UI.
+     */
     public static String[] tim_kiem_mang(String tukhoa) {
         try {
-            Socket mang = new Socket(CauHinh.SERVER_IP, 8888);
+            Socket mang = new Socket(LOCAL_IP, LOCAL_PORT);
             DataOutputStream gui_di  = new DataOutputStream(mang.getOutputStream());
             DataInputStream  nhan_ve = new DataInputStream(mang.getInputStream());
 
@@ -49,20 +60,21 @@ public class ket_noi_tcp {
                 return ketqua.split(";;");
             }
         } catch (Exception loi) {
-            System.out.println("Loi ket noi tcp tim kiem: " + loi.getMessage());
+            System.out.println("[LOCAL] Loi tim kiem: " + loi.getMessage());
         }
         return new String[0];
     }
 
-    // Gioi han kich thuoc file toi da cho phep upload: 100 MB
-    private static final long GIOI_HAN_BYTES = 100L * 1024 * 1024; // 100 MB
-
-    // Ham tai file len may chu (co danh muc va tags)
+    /**
+     * Tai file len may chu local (voi danh muc mac dinh).
+     */
     public static void tai_len(File file_goc, JTextArea hienthi) {
         tai_len(file_goc, hienthi, "Khac", "");
     }
 
-    // Ham tai file len may chu - day du thong tin danh muc va tags
+    /**
+     * Tai file len may chu local - day du thong tin danh muc va tags.
+     */
     public static void tai_len(File file_goc, JTextArea hienthi, String danhmuc, String tags) {
         // Kiem tra kich thuoc file truoc khi gui
         if (file_goc.length() > GIOI_HAN_BYTES) {
@@ -77,7 +89,7 @@ public class ket_noi_tcp {
         }
 
         try {
-            Socket mang = new Socket(CauHinh.SERVER_IP, 8888);
+            Socket mang = new Socket(LOCAL_IP, LOCAL_PORT);
             DataOutputStream gui_di  = new DataOutputStream(mang.getOutputStream());
             DataInputStream  nhan_ve = new DataInputStream(mang.getInputStream());
 
@@ -91,17 +103,19 @@ public class ket_noi_tcp {
             chucnang.truyen_tai_file.gui_file(gui_di, file_goc);
 
             String ketqua = nhan_ve.readUTF();
-            hienthi.append("Trang thai tai len: " + ketqua + "\n");
+            hienthi.append("Tai len (local): " + ketqua + "\n");
             mang.close();
         } catch (Exception loi) {
-            hienthi.append("Loi tai len: " + loi.getMessage() + "\n");
+            hienthi.append("Loi tai len local: " + loi.getMessage() + "\n");
         }
     }
 
-    // Ham tai file xuong
+    /**
+     * Tai file xuong tu may chu local.
+     */
     public static void tai_xuong(String tenfile, JTextArea hienthi) {
         try {
-            Socket mang = new Socket(CauHinh.SERVER_IP, 8888);
+            Socket mang = new Socket(LOCAL_IP, LOCAL_PORT);
             DataOutputStream gui_di  = new DataOutputStream(mang.getOutputStream());
             DataInputStream  nhan_ve = new DataInputStream(mang.getInputStream());
 
@@ -112,13 +126,13 @@ public class ket_noi_tcp {
                 long dungluong = Long.parseLong(phan_hoi.split("\\|")[1]);
                 File file_dich = new File("src/luutru/download/" + tenfile);
                 chucnang.truyen_tai_file.nhan_file(nhan_ve, file_dich, dungluong);
-                hienthi.append("Tai xuong hoan tat: " + tenfile + " (" + dungluong + " bytes)\n");
+                hienthi.append("Tai xuong (local) hoan tat: " + tenfile + " (" + dungluong + " bytes)\n");
             } else {
                 hienthi.append("Loi tai xuong: " + phan_hoi + "\n");
             }
             mang.close();
         } catch (Exception loi) {
-            hienthi.append("Loi tai xuong: " + loi.getMessage() + "\n");
+            hienthi.append("Loi tai xuong local: " + loi.getMessage() + "\n");
         }
     }
 }

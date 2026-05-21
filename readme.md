@@ -15,6 +15,7 @@
 | 📊 **Thống kê lượt tải** | Theo dõi lượt tải từng tài liệu, lưu vĩnh viễn trong MongoDB |
 | 📡 **Thông báo realtime** | Broadcast UDP — tất cả Client nhận thông báo ngay khi có tài liệu mới |
 | 🔔 **Kiểm tra kết nối** | Popup thông báo xanh/đỏ khi mở app — biết ngay Server có online không |
+| 🔀 **Tự động phân luồng** | Phát hiện server local tự động — không cần nhập IP khi chạy trên cùng máy |
 | 🖼️ **Giao diện icon** | Danh sách tài liệu hiển thị dạng icon card (kiểu File Explorer) |
 | 🌐 **Kết nối từ xa** | Hỗ trợ Radmin VPN / ZeroTier để kết nối qua Internet |
 | 🐳 **Docker Server** | Server chạy 24/7 trong container, deploy bằng 1 lệnh |
@@ -27,14 +28,19 @@
 ┌─────────────────────────────────────────────────────────────┐
 │                     PHÍA CLIENT (Java Swing)                 │
 │                                                              │
-│   ┌──────────────┐  TCP:8888  ┌───────────────────────────┐ │
-│   │  client_ui   │◄──────────►│   ket_noi_tcp             │ │
-│   │  (Giao diện) │            │   (Upload/Download/Search) │ │
-│   │              │  RMI:1099  │   goi_rmi                  │ │
-│   │  WrapLayout  │◄──────────►│   (Quản trị từ xa)        │ │
-│   │  (Icon grid) │            │   nhan_udp                 │ │
-│   │              │  UDP:9999  │   (Nhận thông báo)        │ │
-│   └──────────────┘◄──────────►└───────────────────────────┘ │
+│   ┌──────────────┐            ┌───────────────────────────┐ │
+│   │  client_ui   │            │  chucnang3/PhanLuong      │ │
+│   │  (Giao diện) │───────────►│  (Tự động phân luồng)     │ │
+│   │              │            └─────────┬─────────────────┘ │
+│   │  WrapLayout  │              LOCAL?  │  LAN?             │
+│   │  (Icon grid) │            ┌─────────┴─────────────────┐ │
+│   │              │  TCP:8888  │ KetNoiLocal │ ket_noi_tcp  │ │
+│   │              │◄──────────►│ (localhost) │ (LAN/VPN IP) │ │
+│   │              │  RMI:1099  │ goi_rmi                    │ │
+│   │              │◄──────────►│ (Quản trị từ xa)           │ │
+│   │              │  UDP:9999  │ nhan_udp                   │ │
+│   │              │◄──────────►│ (Nhận thông báo)           │ │
+│   └──────────────┘            └───────────────────────────┘ │
 └─────────────────────────────────────────────────────────────┘
                          ▲ Radmin VPN / LAN
 ┌─────────────────────────────────────────────────────────────┐
@@ -79,7 +85,7 @@ Baitaplon_Nhom7/
 │   ├── client_ui/             # Client
 │   │   ├── client_ui.java     # Giao diện chính (Swing)
 │   │   ├── CauHinh.java       # Cấu hình IP server
-│   │   ├── ket_noi_tcp.java   # Kết nối TCP (giới hạn 100MB)
+│   │   ├── ket_noi_tcp.java   # Kết nối TCP chế độ LAN (giới hạn 100MB)
 │   │   ├── goi_rmi.java       # Gọi hàm RMI từ xa
 │   │   ├── nhan_udp.java      # Lắng nghe UDP
 │   │   └── WrapLayout.java    # Layout icon dạng lưới
@@ -88,9 +94,12 @@ Baitaplon_Nhom7/
 │   │   └── giao_dien_phu.java    # Cửa sổ tìm kiếm/tải xuống
 │   ├── chucnang2/
 │   │   └── GiaoDienChonTag.java  # Popup chọn danh mục + tag
+│   ├── chucnang3/             # Module phân luồng kết nối
+│   │   ├── PhanLuong.java        # Tự động detect Local vs LAN
+│   │   └── KetNoiLocal.java      # Kết nối TCP chế độ Local (localhost)
 │   ├── thongbao/              # Module thông báo kết nối
 │   │   ├── KiemTraKetNoi.java    # Kiểm tra TCP socket (timeout 3s)
-│   │   └── HopThoaiThongBao.java # Dialog xanh/đỏ khi mở app
+│   │   └── HopThoaiThongBao.java # Dialog xanh/đỏ (phân biệt Local/LAN)
 │   ├── resources/
 │   │   └── icontl.png         # Icon đại diện tài liệu trong UI
 │   └── luutru/
@@ -157,14 +166,24 @@ docker logs server_thuvien
 
 **Bước 2:** Chạy file `src/client_ui/client_ui.java`
 
-**Bước 3:** Nhập địa chỉ IP Server khi được hỏi:
-- Cùng mạng LAN: nhập IP Wi-Fi của máy chủ (vd: `192.168.1.5`)
-- Qua Internet (Radmin VPN): nhập IP Radmin của máy chủ (vd: `26.18.244.131`)
-- Trên cùng máy: nhập `localhost`
+**Bước 3:** Hệ thống **tự động phân luồng** kết nối:
+
+```
+Client khởi động
+    ↓
+Kiểm tra localhost:8888
+    ├── ✅ Có server local → Chế độ LOCAL (không hỏi IP)
+    └── ❌ Không có → Hỏi IP LAN / Radmin VPN
+```
+
+- **Chạy trên cùng máy:** Client tự phát hiện server local → kết nối ngay, **không cần nhập IP**
+- **Chạy khác máy (LAN):** Nhập IP Wi-Fi của máy chủ (vd: `192.168.1.5`)
+- **Qua Internet (Radmin VPN):** Nhập IP Radmin của máy chủ (vd: `26.18.244.131`)
 
 **Bước 4:** Hộp thoại thông báo xuất hiện:
 - 🟢 **Nền xanh** = kết nối thành công → vào app sau 3 giây
-- 🔴 **Nền đỏ** = không kết nối được → kiểm tra lại IP / Radmin VPN / Docker
+- 🔴 **Nền đỏ (local)** = server chưa khởi động → kiểm tra Docker / server
+- 🔴 **Nền đỏ (LAN)** = không kết nối được → kiểm tra IP / Radmin VPN
 
 ---
 
@@ -208,7 +227,7 @@ docker logs server_thuvien
 ## ⚙️ Cấu Hình Nâng Cao
 
 ### Thay đổi giới hạn kích thước file (hiện tại: 100 MB)
-Sửa trong `src/client_ui/ket_noi_tcp.java`:
+Sửa trong `src/client_ui/ket_noi_tcp.java` và `src/chucnang3/KetNoiLocal.java`:
 ```java
 private static final long GIOI_HAN_BYTES = 100L * 1024 * 1024; // đổi 100 thành số MB mong muốn
 ```

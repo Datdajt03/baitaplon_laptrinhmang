@@ -44,9 +44,15 @@ public class HopThoaiThongBao extends JDialog {
         Color mauChinh = ketNoiThanhCong ? MAU_XANH_DAM  : MAU_DO_DAM;
         String kyHieu  = ketNoiThanhCong ? "✓" : "✗";
         String tieuDe  = ketNoiThanhCong ? "Kết Nối Thành Công!" : "Kết Nối Thất Bại";
-        String moTa    = ketNoiThanhCong
-                ? "Đã kết nối tới máy chủ tại:\n" + serverIp + ":8888"
-                : "Không thể kết nối tới máy chủ tại:\n" + serverIp + ":8888\n\nKiểm tra lại Radmin VPN hoặc IP máy chủ.";
+        String moTaPhanTu;
+        if (ketNoiThanhCong) {
+            moTaPhanTu = "Đã kết nối tới máy chủ tại:\n" + serverIp + ":8888";
+        } else if ("localhost".equals(serverIp) || "127.0.0.1".equals(serverIp)) {
+            moTaPhanTu = "Không thể kết nối tới máy chủ tại:\n" + serverIp + ":8888\n\nKiểm tra lại server đã được khởi động chưa.";
+        } else {
+            moTaPhanTu = "Không thể kết nối tới máy chủ tại:\n" + serverIp + ":8888\n\nKiểm tra lại Radmin VPN hoặc IP máy chủ.";
+        }
+        String moTa = moTaPhanTu;
 
         // ------ Layout chinh ------
         JPanel pn_chinh = new JPanel(new GridBagLayout());

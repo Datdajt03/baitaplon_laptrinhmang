@@ -229,7 +229,12 @@ public class client_ui extends javax.swing.JFrame {
 
     private void nut_lammoiActionPerformed(java.awt.event.ActionEvent evt) {
         new Thread(() -> {
-            String[] danhsach = ket_noi_tcp.tim_kiem_mang("");
+            String[] danhsach;
+            if (chucnang3.PhanLuong.laLocal()) {
+                danhsach = chucnang3.KetNoiLocal.tim_kiem_mang("");
+            } else {
+                danhsach = ket_noi_tcp.tim_kiem_mang("");
+            }
             SwingUtilities.invokeLater(() -> hienThiDanhSachIcon(danhsach));
         }).start();
     }
@@ -343,20 +348,14 @@ public class client_ui extends javax.swing.JFrame {
         }
         //</editor-fold>
         
-        // Hỏi địa chỉ IP của server
-        String ip = javax.swing.JOptionPane.showInputDialog(null, 
-            "Nhập địa chỉ IP của Server (để trống nếu chạy trên máy này hoặc localhost):", 
-            "Cấu hình Kết Nối", 
-            javax.swing.JOptionPane.QUESTION_MESSAGE);
-            
-        if (ip != null && !ip.trim().isEmpty()) {
-            CauHinh.SERVER_IP = ip.trim();
-        } else {
-            CauHinh.SERVER_IP = "localhost";
-        }
+        // Phan luong tu dong: kiem tra local truoc, chi hoi IP LAN khi khong co server local
+        chucnang3.PhanLuong.CheDo cheDo = chucnang3.PhanLuong.xacDinhKetNoi();
 
-        // Kiem tra ket noi va hien thi hop thoai thong bao (thanh cong / that bai)
+        // Hien thi thong bao ket noi (thanh cong / that bai)
         thongbao.HopThoaiThongBao.hienThiVaKiemTra(CauHinh.SERVER_IP);
+
+        System.out.println("[CLIENT] Che do ket noi: " + cheDo 
+            + " | Server IP: " + CauHinh.SERVER_IP);
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
