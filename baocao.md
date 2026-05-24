@@ -311,12 +311,18 @@ Người dùng nhập IP → KiemTraKetNoi.kiemTra(ip, 8888)
    * Nếu xác nhận YES, Client gửi lệnh TCP: `xoatailieu|[tên file]` tới Server.
 2. **Lớp 2: Xóa sạch dữ liệu (Server Database & File Wipeout)**
    * Server nhận lệnh `xoatailieu` và thực hiện đồng thời 2 tác vụ xóa:
-     * **Xóa trong MongoDB:** Thực hiện truy vấn xóa `col.deleteMany(Filters.eq("ten_file", tenfile))` để loại bỏ hoàn toàn metadata của file khỏi database.
+     * **Xóa trong MongoDB:** Thực hiện truy vấn xóa `col.deleteMany(Filters.eq("ten_file", tenfile))` để loại bỏ hoàn toàn metadata của file khỏi database thông qua lớp `MongoKetNoi`.
      * **Xóa file vật lý trên đĩa cứng:** Xác định đường dẫn file trong thư mục `src/luutru/upload/` và gọi hàm `file.delete()` để giải phóng dung lượng đĩa cứng trên máy chủ Server ngay lập tức.
    * Server gửi phản hồi thành công `ok|...` về cho Client.
 3. **Lớp 3: Broadcast đồng bộ mạng (UDP Realtime Synchronization)**
    * Sau khi xóa sạch dữ liệu, Server phát đi gói tin UDP broadcast: `DELETE|[tên file]` đến cổng `9999` trên toàn bộ mạng LAN/VPN.
    * Tất cả các máy Client đang chạy trong mạng sẽ lập tức bắt được gói tin này qua luồng `nhan_udp`, tự động in thông tin lên thanh Lịch sử bên trái: `[HH:mm:ss] Một người dùng khác vừa xóa tài liệu: [Tên tài liệu]`, đồng thời kích hoạt hàm `lamMoiDanhSach()` để tài liệu đó biến mất hoàn toàn khỏi màn hình chính của họ ngay lập tức mà không cần bất kỳ thao tác thủ công nào!
+
+### 3.11 Cơ chế Logging Hệ thống (Logging System)
+Để dễ dàng theo dõi trạng thái Server, nhóm xây dựng module `Logger` ghi lại toàn bộ hoạt động vào tệp `server.log`. Mọi kết nối, lệnh xử lý đều được đánh dấu thời gian (timestamp) để phục vụ tra soát lỗi khi vận hành hệ thống.
+
+### 3.12 Cơ chế Tự động đóng Socket (Timeout Management)
+Để tránh tình trạng treo Socket do Client ngắt kết nối đột ngột, Server áp dụng thời gian chờ (Socket Timeout) là 5000ms cho tất cả các luồng TCP. Nếu không nhận được dữ liệu, Socket sẽ được đóng tự động để giải phóng tài nguyên.
 
 ---
 
@@ -393,7 +399,7 @@ Do Client sử dụng luồng bất đồng bộ (Thread) để tải file nhằ
 1. Client gửi lệnh `taixuong|tenfile` qua socket TCP.
 2. Server ban đầu xử lý theo trình tự tuyến tính:
    * **Bước A:** Đọc file vật lý và truyền luồng byte dữ liệu qua TCP (`truyen_tai_file.gui_file`).
-   * **Bước B:** Gọi RMI đến Database MongoDB để thực hiện câu lệnh tăng lượt tải (`dichvu_rmi.tang_luottai`).
+   * **Bước B:** Thực hiện cập nhật trực tiếp Database MongoDB để tăng lượt tải thông qua lớp `MongoKetNoi`.
 3. Vì kích thước file nhỏ hoặc băng thông luồng đệm (Network Buffer) của TCP cực cao, luồng nhận dữ liệu của Client hoàn tất việc đọc byte từ card mạng và kết thúc tiến trình nhận file **trước khi luồng xử lý của Server chạy đến Bước B** (ghi dữ liệu vào MongoDB).
 4. Ngay khi nhận file xong, Client lập tức khởi chạy một kết nối TCP mới gửi lệnh `timkiem` để quét lại dữ liệu metadata vẽ lên UI. Kết nối này đến Server trước khi giao dịch ghi lượt tải ở Bước B hoàn tất. Dẫn đến Client vẽ UI bằng giá trị cũ trong MongoDB.
 
@@ -407,7 +413,7 @@ TIẾN TRÌNH CLIENT: ───[Nhận File xong]───► [Gửi Lệnh TimK
 
 ### 🩹 Giải pháp khắc phục tối ưu:
 Nhóm đã tiến hành tái cấu trúc lại trình tự thực hiện tại file [may_chu_tcp.java](file:///a:/code%20javanetbean/Baitaplon_Nhom7/src/may_chu/may_chu_tcp.java):
-* **Đảo ngược logic xử lý:** Server thực hiện **Tăng lượt tải trong MongoDB trước** (`dichvu_rmi.tang_luottai`), sau đó mới **Truyền dữ liệu file qua TCP** (`truyen_tai_file.gui_file`).
+* **Đảo ngược logic xử lý:** Server thực hiện **Tăng lượt tải trong MongoDB trước** (thông qua lớp `MongoKetNoi`), sau đó mới **Truyền dữ liệu file qua TCP** (`truyen_tai_file.gui_file`).
 * **Hiệu quả:** Trong suốt thời gian file được truyền tải trên đường truyền vật lý (dù chỉ mất vài mili-giây), dữ liệu trong MongoDB đã được cập nhật thành công từ trước. Do đó, ngay khi Client tải xong file và kích hoạt lệnh refresh UI, dữ liệu tải về hiển thị chắc chắn là dữ liệu mới nhất, đảm bảo tính realtime đồng bộ 100%!
 
 ### 6.2 Sự cố RMI NAT qua Docker & Giải pháp Bulletproof TCP Fallback cho Bộ Lọc
@@ -440,6 +446,14 @@ Nhóm đã tiến hành tái cấu trúc lại trình tự thực hiện tại f
 
 * **Thiết lập kích thước mặc định:** Để tránh hiện tượng giao diện bị co hẹp hoặc chồng chéo các phần tử khi mở ứng dụng ở các độ phân giải màn hình khác nhau, nhóm đã ghim cố định kích thước khởi động của Client Swing là **`800x800 px`** (`setSize(800, 800)`) và thực hiện tự động căn giữa màn hình (`setLocationRelativeTo(null)`).
 * **Hiệu quả:** Giao diện lưới Explorer 150x150 của thẻ tài liệu được dàn trang rộng rãi, thoáng mát, mang lại cảm giác cao cấp và dễ nhìn nhất cho người sử dụng.
+
+### 6.5 Sự cố tải đè tệp tin và Cơ chế tự động tạo tên file duy nhất (Auto-renaming)
+
+#### 🛑 Hiện tượng lỗi đè tệp tin:
+* Khi nhiều người dùng cùng tải xuống một tài liệu hoặc một người dùng tải xuống tài liệu nhiều lần về cùng thư mục `src/luutru/download/`, hệ thống ban đầu sẽ ghi đè trực tiếp lên tệp tin cũ nếu trùng tên, dẫn đến mất mát dữ liệu cục bộ mà không có cảnh báo.
+
+#### 🩹 Giải pháp khắc phục tối ưu:
+* Nhóm đã xây dựng phương thức `lay_file_dich_duy_nhat` trong lớp `truyen_tai_file.java`. Thuật toán tự động quét sự tồn tại của tệp tin tại thư mục đích. Nếu phát hiện tệp tin đã trùng tên, hệ thống tự chèn thêm ký tự dạng `(1)`, `(2)`, v.v. vào trước phần mở rộng của tệp tin, đảm bảo tính duy nhất và bảo toàn dữ liệu 100%.
 
 ---
 

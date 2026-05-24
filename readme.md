@@ -25,6 +25,8 @@
 | 🔀 **Đồng bộ bộ lọc TCP** | **[NEW]** Khắc phục triệt để lỗi RMI NAT Docker, đồng bộ danh mục/tag qua cổng TCP 8888 siêu ổn định. |
 | 🩹 **Tự động quét chữa lành** | **[NEW]** Tự động trích xuất danh mục/tag từ tài liệu thực tế khi database gợi ý bị trống. |
 | 📐 **Kích thước rộng rãi (800x800)** | **[NEW]** Tự động điều chỉnh kích thước cửa sổ rộng rãi khi khởi động, tối ưu không gian hiển thị Explorer. |
+| 📋 **Lịch sử hoạt động mạng (Activity Sidebar)** | **[NEW]** Thanh hoạt động bên trái cập nhật realtime toàn bộ sự kiện LAN (Upload, Download, Xóa file, Thêm danh mục/tag) kèm mốc thời gian chi tiết của mọi máy trạm. |
+| ⏱️ **Làm mới tự động (Auto Refresh)** | **[NEW]** Swing Timer chạy ngầm tự động kích hoạt mỗi 10 giây để đồng bộ danh sách tài liệu mới và bộ lọc từ Server mà không cần làm mới thủ công. |
 
 ---
 
