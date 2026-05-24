@@ -33,6 +33,18 @@ public class nhan_udp extends Thread {
                         String tenfile = thongbao.substring(7);
                         hienthi.append("có lượt đánh giá mới cho tài liệu: " + tenfile + "\n");
                         client_ui.them_hoat_dong("Một người dùng khác vừa đánh giá tài liệu: " + tenfile);
+                    } else if (thongbao.startsWith("DOWNLOAD|")) {
+                        String tenfile = thongbao.substring(9);
+                        hienthi.append("có lượt tải mới cho tài liệu: " + tenfile + "\n");
+                        client_ui.them_hoat_dong("Một người dùng khác vừa tải xuống tài liệu: " + tenfile);
+                    } else if (thongbao.startsWith("CATEGORY|")) {
+                        String tendanhmuc = thongbao.substring(9);
+                        hienthi.append("đã thêm danh mục mới: " + tendanhmuc + "\n");
+                        client_ui.them_hoat_dong("Một người dùng khác vừa thêm danh mục mới: " + tendanhmuc);
+                    } else if (thongbao.startsWith("TAG|")) {
+                        String tentag = thongbao.substring(4);
+                        hienthi.append("đã thêm tag mới: " + tentag + "\n");
+                        client_ui.them_hoat_dong("Một người dùng khác vừa thêm tag mới: " + tentag);
                     } else {
                         hienthi.append("co tai lieu moi: " + thongbao + "\n");
                         client_ui.them_hoat_dong("Tài liệu mới vừa được tải lên: " + thongbao);

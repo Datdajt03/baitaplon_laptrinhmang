@@ -244,6 +244,9 @@ class luong_xu_ly_tcp extends Thread {
                     dichvu_rmi.tang_luottai(thamso);
 
                     chucnang.truyen_tai_file.gui_file(gui_di, file_can_tai);
+                    
+                    // Phat UDP thong bao nguoi dung tai file
+                    may_chu_udp.phat_thongbao("DOWNLOAD|" + thamso);
                 } else {
                     gui_di.writeUTF("file khong ton tai");
                 }

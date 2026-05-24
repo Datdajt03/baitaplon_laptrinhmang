@@ -118,6 +118,11 @@ public class client_ui extends javax.swing.JFrame {
         nut_lammoiActionPerformed(null);
         
         them_hoat_dong("Hệ thống đã sẵn sàng!");
+
+        // 7. Khởi tạo Timer tự động làm mới danh sách cứ mỗi 10 giây
+        new javax.swing.Timer(10000, e -> {
+            lamMoiDanhSach();
+        }).start();
     }
 
     // Phương thức tĩnh hiển thị hoạt động thời gian thực lên thanh bên trái

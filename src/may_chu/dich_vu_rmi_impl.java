@@ -34,6 +34,8 @@ public class dich_vu_rmi_impl extends UnicastRemoteObject implements dich_vu_rmi
                     return "danh muc da ton tai: " + tendanhmuc;
                 }
                 col.insertOne(new Document("ten", tendanhmuc));
+                // Phat UDP thong bao nguoi dung them danh muc
+                may_chu_udp.phat_thongbao("CATEGORY|" + tendanhmuc);
                 return "da them danh muc: " + tendanhmuc;
             } else if (hanhdong.equals("laytat")) {
                 // Lay toan bo danh muc de hien thi
@@ -63,6 +65,8 @@ public class dich_vu_rmi_impl extends UnicastRemoteObject implements dich_vu_rmi
                     return "tag da ton tai: " + tentag;
                 }
                 col.insertOne(new Document("ten", tentag));
+                // Phat UDP thong bao nguoi dung them tag
+                may_chu_udp.phat_thongbao("TAG|" + tentag);
                 return "da them tag: " + tentag;
             } else if (hanhdong.equals("laytat")) {
                 List<String> ds = new ArrayList<>();
