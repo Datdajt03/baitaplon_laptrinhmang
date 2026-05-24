@@ -37,6 +37,10 @@ public class nhan_udp extends Thread {
                         String tenfile = thongbao.substring(9);
                         hienthi.append("có lượt tải mới cho tài liệu: " + tenfile + "\n");
                         client_ui.them_hoat_dong("Một người dùng khác vừa tải xuống tài liệu: " + tenfile);
+                    } else if (thongbao.startsWith("DELETE|")) {
+                        String tenfile = thongbao.substring(7);
+                        hienthi.append("đã xóa tài liệu: " + tenfile + "\n");
+                        client_ui.them_hoat_dong("Một người dùng khác vừa xóa tài liệu: " + tenfile);
                     } else if (thongbao.startsWith("CATEGORY|")) {
                         String tendanhmuc = thongbao.substring(9);
                         hienthi.append("đã thêm danh mục mới: " + tendanhmuc + "\n");

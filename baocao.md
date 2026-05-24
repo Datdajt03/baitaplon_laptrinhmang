@@ -301,6 +301,23 @@ Người dùng nhập IP → KiemTraKetNoi.kiemTra(ip, 8888)
      (tự đóng sau 3 giây)          + gợi ý kiểm tra Radmin
 ```
 
+### 3.10 Cơ Chế Xóa Tài Liệu Vĩnh Viễn — Giải Phóng Ổ Cứng & Đồng Bộ Realtime Toàn Hệ Thống
+
+Để đảm bảo hệ thống không bị phình dung lượng bởi các tài liệu rác và thông tin được đồng bộ tức thì, nhóm phát triển đã xây dựng **Cơ chế xóa tài liệu vĩnh viễn (Wipeout & Sync)** cực kỳ chặt chẽ qua 3 lớp:
+
+#### Quy trình xử lý khi nhấn "Xóa tài liệu vĩnh viễn":
+1. **Lớp 1: Xác nhận bảo vệ (Client UI Confirmation)**
+   * Khi người dùng click chuột phải vào Card tài liệu -> Chọn **Xóa tài liệu vĩnh viễn**, hệ thống sẽ mở một hộp thoại cảnh báo `JOptionPane.WARNING_MESSAGE` để người dùng xác nhận lại nhằm tránh vô tình xóa mất dữ liệu quan trọng.
+   * Nếu xác nhận YES, Client gửi lệnh TCP: `xoatailieu|[tên file]` tới Server.
+2. **Lớp 2: Xóa sạch dữ liệu (Server Database & File Wipeout)**
+   * Server nhận lệnh `xoatailieu` và thực hiện đồng thời 2 tác vụ xóa:
+     * **Xóa trong MongoDB:** Thực hiện truy vấn xóa `col.deleteMany(Filters.eq("ten_file", tenfile))` để loại bỏ hoàn toàn metadata của file khỏi database.
+     * **Xóa file vật lý trên đĩa cứng:** Xác định đường dẫn file trong thư mục `src/luutru/upload/` và gọi hàm `file.delete()` để giải phóng dung lượng đĩa cứng trên máy chủ Server ngay lập tức.
+   * Server gửi phản hồi thành công `ok|...` về cho Client.
+3. **Lớp 3: Broadcast đồng bộ mạng (UDP Realtime Synchronization)**
+   * Sau khi xóa sạch dữ liệu, Server phát đi gói tin UDP broadcast: `DELETE|[tên file]` đến cổng `9999` trên toàn bộ mạng LAN/VPN.
+   * Tất cả các máy Client đang chạy trong mạng sẽ lập tức bắt được gói tin này qua luồng `nhan_udp`, tự động in thông tin lên thanh Lịch sử bên trái: `[HH:mm:ss] Một người dùng khác vừa xóa tài liệu: [Tên tài liệu]`, đồng thời kích hoạt hàm `lamMoiDanhSach()` để tài liệu đó biến mất hoàn toàn khỏi màn hình chính của họ ngay lập tức mà không cần bất kỳ thao tác thủ công nào!
+
 ---
 
 ## 4. Deployment bằng Docker

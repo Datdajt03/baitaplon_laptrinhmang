@@ -587,6 +587,41 @@ public class client_ui extends javax.swing.JFrame {
                 });
                 popup.add(itemDanhGia);
 
+                // Nut xoa tai lieu vinh vien
+                JMenuItem itemXoa = new JMenuItem("Xóa tài liệu vĩnh viễn");
+                itemXoa.setForeground(new Color(200, 30, 30));
+                itemXoa.addActionListener(e -> {
+                    int xacNhan = JOptionPane.showConfirmDialog(
+                        null,
+                        "Bạn có chắc chắn muốn xóa vĩnh viễn tài liệu \"" + tenfile + "\" không?\nHành động này sẽ xóa sạch file vật lý trên server và toàn bộ dữ liệu liên quan!",
+                        "Xác Nhận Xóa Vĩnh Viễn",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.WARNING_MESSAGE
+                    );
+                    if (xacNhan == JOptionPane.YES_OPTION) {
+                        client_ui.them_hoat_dong("Đang thực hiện xóa tài liệu: " + tenfile);
+                        new Thread(() -> {
+                            String ketqua;
+                            if (chucnang3.PhanLuong.laLocal()) {
+                                ketqua = chucnang3.KetNoiLocal.xoa_tailieu(tenfile);
+                            } else {
+                                ketqua = ket_noi_tcp.xoa_tailieu(tenfile);
+                            }
+                            
+                            if (ketqua.startsWith("ok|")) {
+                                String msg = ketqua.split("\\|")[1];
+                                client_ui.them_hoat_dong("Đã xóa thành công: " + tenfile);
+                                JOptionPane.showMessageDialog(null, msg, "Thành Công", JOptionPane.INFORMATION_MESSAGE);
+                            } else {
+                                client_ui.them_hoat_dong("Lỗi xóa tài liệu: " + ketqua);
+                                JOptionPane.showMessageDialog(null, ketqua, "Lỗi", JOptionPane.ERROR_MESSAGE);
+                            }
+                            lamMoiDanhSach();
+                        }).start();
+                    }
+                });
+                popup.add(itemXoa);
+
                 // Hover effect sang mau nhe + click tai nhanh / click chuot phai
                 card.addMouseListener(new java.awt.event.MouseAdapter() {
                     @Override public void mouseEntered(java.awt.event.MouseEvent e) {

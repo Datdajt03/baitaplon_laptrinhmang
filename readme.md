@@ -14,6 +14,7 @@
 | 🏷️ **Danh mục & Tag** | Phân loại khi upload, gợi ý tag tự động, thẻ tag xanh lá cây hiện thị trực quan trên card. |
 | 📊 **Thống kê lượt tải** | Theo dõi lượt tải, lưu vĩnh viễn trong MongoDB, tự cập nhật lượt tải ngay sau khi download thành công. |
 | ⭐ **Đánh giá tài liệu** | **[NEW]** Đánh giá 1-5 sao bằng RMI, hiển thị trung bình sao trực quan trên card, tự động đồng bộ thời gian thực qua UDP. |
+| 🗑️ **Xóa tài liệu vĩnh viễn** | **[NEW]** Click chuột phải để xóa sạch dữ liệu tài liệu vĩnh viễn (xóa record MongoDB + xóa file vật lý trên server) + tự động broadcast và đồng bộ realtime qua UDP. |
 | 📡 **Đồng bộ Real-time 100%** | Tự động cập nhật giao diện thời gian thực trên TẤT CẢ các máy Client trong mạng LAN/VPN nhờ UDP Multicast ngay khi có người upload hoặc đánh giá file mới. |
 | 🔔 **Kiểm tra kết nối** | Popup thông báo xanh/đỏ khi mở app — hiển thị rõ chế độ Local/LAN giúp giám sát kết nối tức thì. |
 | 🔀 **Xác nhận kết nối thông minh** | Client tự phát hiện server local nhưng **luôn mở hộp thoại hỏi ý kiến** người dùng (YES chọn Local, NO mở bảng nhập IP LAN / Radmin VPN để test mạng). |
@@ -211,6 +212,7 @@ Kiểm tra localhost:8888
 | 📤 **Tải Lên** | Chọn file → chọn danh mục + nhập tag → xác nhận |
 | 📥 **Tải Xuống** | Mở cửa sổ chọn file để tải về máy |
 | 🔍 **Tìm Kiếm** | Mở cửa sổ tìm theo tên file |
+| 🗑️ **Xóa vĩnh viễn** | **[NEW]** Click chuột phải vào Card tài liệu -> Chọn **Xóa tài liệu vĩnh viễn** để xóa sạch dữ liệu khỏi server. |
 
 ### Tab **Chức Năng TCP**
 - Tìm kiếm, tải lên, tải xuống với log chi tiết

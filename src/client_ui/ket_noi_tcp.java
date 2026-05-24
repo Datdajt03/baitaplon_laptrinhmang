@@ -156,4 +156,20 @@ public class ket_noi_tcp {
         }
         return "";
     }
+
+    // Ham xoa tai lieu vinh vien
+    public static String xoa_tailieu(String tenfile) {
+        try {
+            Socket mang = new Socket(CauHinh.SERVER_IP, 8888);
+            DataOutputStream gui_di  = new DataOutputStream(mang.getOutputStream());
+            DataInputStream  nhan_ve = new DataInputStream(mang.getInputStream());
+
+            gui_di.writeUTF("xoatailieu|" + tenfile);
+            String phan_hoi = nhan_ve.readUTF();
+            mang.close();
+            return phan_hoi;
+        } catch (Exception loi) {
+            return "loi: " + loi.getMessage();
+        }
+    }
 }

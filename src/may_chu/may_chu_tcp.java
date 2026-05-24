@@ -251,6 +251,34 @@ class luong_xu_ly_tcp extends Thread {
                     gui_di.writeUTF("file khong ton tai");
                 }
             }
+            
+            // --------------------------------------------------
+            // XOA TAI LIEU: xoa sach MongoDB + file vat ly
+            // --------------------------------------------------
+            else if (hanhdong.equals("xoatailieu")) {
+                String tenfile = thamso;
+                
+                // 1. Xoa trong MongoDB
+                MongoCollection<Document> col = MongoKetNoi.layTaiLieu();
+                long deletedCount = col.deleteMany(Filters.eq("ten_file", tenfile)).getDeletedCount();
+                
+                // 2. Xoa file vat ly tren dia
+                File file_vat_ly = new File(thumuc_upload + tenfile);
+                boolean xoaFile = false;
+                if (file_vat_ly.exists()) {
+                    xoaFile = file_vat_ly.delete();
+                }
+                
+                if (deletedCount > 0 || xoaFile) {
+                    gui_di.writeUTF("ok|Đã xóa sạch dữ liệu của tài liệu: " + tenfile);
+                    System.out.println("[HE THONG] Da xoa vinh vien tai lieu: " + tenfile + " (MongoDB: " + deletedCount + ", File: " + xoaFile + ")");
+                    
+                    // 3. Phat UDP thong bao nguoi dung xoa tai lieu
+                    may_chu_udp.phat_thongbao("DELETE|" + tenfile);
+                } else {
+                    gui_di.writeUTF("loi: Tài liệu không tồn tại hoặc không thể xóa");
+                }
+            }
 
             mang.close();
         } catch (Exception loi) {
