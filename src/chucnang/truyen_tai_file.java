@@ -38,4 +38,38 @@ public class truyen_tai_file {
         ghi_file.flush();
         ghi_file.close();
     }
+
+    // Ham tu dong tao ten file khong trung lap kieu (1), (2) neu da ton tai trong thu muc download
+    public static File lay_file_dich_duy_nhat(String tenfile) {
+        String thu_muc = "src/luutru/download/";
+        
+        // Tao thu muc neu chua ton tai
+        File directory = new File(thu_muc);
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+
+        File file = new File(thu_muc + tenfile);
+        if (!file.exists()) {
+            return file;
+        }
+
+        String name = tenfile;
+        String extension = "";
+        int dotIndex = tenfile.lastIndexOf('.');
+        if (dotIndex > 0) {
+            name = tenfile.substring(0, dotIndex);
+            extension = tenfile.substring(dotIndex);
+        }
+
+        int i = 1;
+        while (true) {
+            String newName = name + " (" + i + ")" + extension;
+            File newFile = new File(thu_muc + newName);
+            if (!newFile.exists()) {
+                return newFile;
+            }
+            i++;
+        }
+    }
 }

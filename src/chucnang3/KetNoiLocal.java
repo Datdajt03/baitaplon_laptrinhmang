@@ -124,15 +124,18 @@ public class KetNoiLocal {
 
             if (phan_hoi.startsWith("ok|")) {
                 long dungluong = Long.parseLong(phan_hoi.split("\\|")[1]);
-                File file_dich = new File("src/luutru/download/" + tenfile);
+                File file_dich = chucnang.truyen_tai_file.lay_file_dich_duy_nhat(tenfile);
                 chucnang.truyen_tai_file.nhan_file(nhan_ve, file_dich, dungluong);
-                hienthi.append("Tai xuong (local) hoan tat: " + tenfile + " (" + dungluong + " bytes)\n");
+                hienthi.append("Tai xuong (local) hoan tat: " + file_dich.getName() + " (" + dungluong + " bytes)\n");
+                client_ui.client_ui.them_hoat_dong("Tải xuống (local) hoàn tất: " + file_dich.getName());
             } else {
                 hienthi.append("Loi tai xuong: " + phan_hoi + "\n");
+                client_ui.client_ui.them_hoat_dong("Lỗi tải xuống local: " + phan_hoi);
             }
             mang.close();
         } catch (Exception loi) {
             hienthi.append("Loi tai xuong local: " + loi.getMessage() + "\n");
+            client_ui.client_ui.them_hoat_dong("Lỗi tải xuống local: " + loi.getMessage());
         }
     }
 

@@ -32,8 +32,10 @@ public class nhan_udp extends Thread {
                     if (thongbao.startsWith("RATING|")) {
                         String tenfile = thongbao.substring(7);
                         hienthi.append("có lượt đánh giá mới cho tài liệu: " + tenfile + "\n");
+                        client_ui.them_hoat_dong("Một người dùng khác vừa đánh giá tài liệu: " + tenfile);
                     } else {
                         hienthi.append("co tai lieu moi: " + thongbao + "\n");
+                        client_ui.them_hoat_dong("Tài liệu mới vừa được tải lên: " + thongbao);
                     }
                     // Tu dong lam moi danh sach realtime cho tat ca client trong mang
                     if (client_ui.INSTANCE != null) {

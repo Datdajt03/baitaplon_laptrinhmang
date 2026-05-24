@@ -115,11 +115,13 @@ public class GiaoDienChonTag extends JDialog {
 
             // Chạy tiến trình gửi ngầm để tránh đơ giao diện
             new Thread(() -> {
+                client_ui.client_ui.them_hoat_dong("Bắt đầu tải lên tài liệu: " + file_upload.getName());
                 if (chucnang3.PhanLuong.laLocal()) {
                     chucnang3.KetNoiLocal.tai_len(file_upload, hienthi, danhmuc, tag);
                 } else {
                     client_ui.ket_noi_tcp.tai_len(file_upload, hienthi, danhmuc, tag);
                 }
+                client_ui.client_ui.them_hoat_dong("Tải lên thành công tài liệu: " + file_upload.getName());
                 
                 // Tự động làm mới danh sách tài liệu trên giao diện chính ngay lập tức
                 if (client_ui.client_ui.INSTANCE != null) {

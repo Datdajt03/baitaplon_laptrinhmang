@@ -23,13 +23,46 @@ public class client_ui extends javax.swing.JFrame {
     private JComboBox<String> cb_loc_tag;
     private boolean isUpdatingFilters = false;
 
+    // Bổ sung thanh Taskbar hiển thị hoạt động bên trái
+    private JPanel pn_left_logs;
+    private JTextArea txt_left_logs;
+
     /**
      * Creates new form client_ui
      */
     public client_ui() {
         INSTANCE = this; // Set global instance
         initComponents();
-        setSize(800, 800); // Thiet lap kich thuoc cua so 800x800 luc mo
+        setSize(1020, 800); // Tăng kích thước cửa sổ để chứa thanh Taskbar bên trái thoải mái
+
+        // Thiết lập thanh Taskbar hiển thị hoạt động bên trái
+        pn_left_logs = new JPanel();
+        pn_left_logs.setLayout(new BorderLayout());
+        pn_left_logs.setPreferredSize(new Dimension(220, 800));
+        pn_left_logs.setBackground(new Color(243, 244, 248));
+        pn_left_logs.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, new Color(215, 215, 225)));
+
+        JLabel lbl_logs_title = new JLabel("LỊCH SỬ HOẠT ĐỘNG", SwingConstants.CENTER);
+        lbl_logs_title.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        lbl_logs_title.setForeground(new Color(60, 70, 90));
+        lbl_logs_title.setBorder(BorderFactory.createEmptyBorder(12, 10, 12, 10));
+        pn_left_logs.add(lbl_logs_title, BorderLayout.NORTH);
+
+        txt_left_logs = new JTextArea();
+        txt_left_logs.setEditable(false);
+        txt_left_logs.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        txt_left_logs.setForeground(new Color(60, 60, 70));
+        txt_left_logs.setLineWrap(true);
+        txt_left_logs.setWrapStyleWord(true);
+        txt_left_logs.setBackground(Color.WHITE);
+        txt_left_logs.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
+
+        JScrollPane scroll_logs = new JScrollPane(txt_left_logs);
+        scroll_logs.setBorder(BorderFactory.createEmptyBorder());
+        pn_left_logs.add(scroll_logs, BorderLayout.CENTER);
+
+        // Đưa thanh Taskbar bên trái vào cửa sổ chính
+        getContentPane().add(pn_left_logs, BorderLayout.WEST);
 
         // 1. Dat icon cua so (thanh taskbar + goc trai cua so)
         try {
@@ -83,6 +116,21 @@ public class client_ui extends javax.swing.JFrame {
 
         // 6. Tai danh sach tai lieu ngay khi mo
         nut_lammoiActionPerformed(null);
+        
+        them_hoat_dong("Hệ thống đã sẵn sàng!");
+    }
+
+    // Phương thức tĩnh hiển thị hoạt động thời gian thực lên thanh bên trái
+    public static void them_hoat_dong(String text) {
+        if (INSTANCE != null && INSTANCE.txt_left_logs != null) {
+            SwingUtilities.invokeLater(() -> {
+                java.time.format.DateTimeFormatter dtf = java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss");
+                String time = java.time.LocalTime.now().format(dtf);
+                INSTANCE.txt_left_logs.append("[" + time + "] " + text + "\n\n");
+                // Tự động cuộn xuống dưới cùng khi có thông báo mới
+                INSTANCE.txt_left_logs.setCaretPosition(INSTANCE.txt_left_logs.getDocument().getLength());
+            });
+        }
     }
 
     /**
@@ -493,6 +541,7 @@ public class client_ui extends javax.swing.JFrame {
                 
                 JMenuItem itemTai = new JMenuItem("Tải xuống tài liệu");
                 itemTai.addActionListener(evt -> {
+                    client_ui.them_hoat_dong("Bắt đầu tải xuống tài liệu: " + tenfile);
                     new Thread(() -> {
                         if (chucnang3.PhanLuong.laLocal()) {
                             chucnang3.KetNoiLocal.tai_xuong(tenfile, hienthi_tailieu);
@@ -522,6 +571,7 @@ public class client_ui extends javax.swing.JFrame {
                                 String result;
                                 String rmiHost = chucnang3.PhanLuong.laLocal() ? "localhost" : CauHinh.SERVER_IP;
                                 result = goi_rmi.danhgia_tailieu(rmiHost, tenfile, sao);
+                                client_ui.them_hoat_dong("Bạn đã đánh giá " + sao + " sao cho tài liệu: " + tenfile);
                                 JOptionPane.showMessageDialog(null, result, "Thông Báo", JOptionPane.INFORMATION_MESSAGE);
                                 lamMoiDanhSach();
                             } catch (Exception ex) {
@@ -558,6 +608,7 @@ public class client_ui extends javax.swing.JFrame {
                                     JOptionPane.YES_NO_OPTION,
                                     JOptionPane.QUESTION_MESSAGE);
                             if (xacNhan == JOptionPane.YES_OPTION) {
+                                client_ui.them_hoat_dong("Bắt đầu tải nhanh tài liệu: " + tenfile);
                                 new Thread(() -> {
                                     if (chucnang3.PhanLuong.laLocal()) {
                                         chucnang3.KetNoiLocal.tai_xuong(tenfile, hienthi_tailieu);

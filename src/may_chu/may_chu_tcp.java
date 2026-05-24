@@ -252,6 +252,7 @@ class luong_xu_ly_tcp extends Thread {
             mang.close();
         } catch (Exception loi) {
             System.out.println("[TCP] Loi xu ly khach: " + loi.getMessage());
+            loi.printStackTrace();
         }
     }
 }

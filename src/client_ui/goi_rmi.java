@@ -17,6 +17,7 @@ public class goi_rmi {
             
             String ketqua = dichvu.quanly_danhmuc("them", tendanhmuc);
             hienthi.append("rmi tra ve: " + ketqua + "\n");
+            client_ui.them_hoat_dong("Bạn đã thêm danh mục mới: " + tendanhmuc);
         } catch (Exception loi) {
             hienthi.append("loi goi rmi: " + loi.getMessage() + "\n");
         }
@@ -31,6 +32,7 @@ public class goi_rmi {
             
             String ketqua = dichvu.quanly_tag("them", tentag);
             hienthi.append("rmi tra ve: " + ketqua + "\n");
+            client_ui.them_hoat_dong("Bạn đã thêm tag mới: " + tentag);
         } catch (Exception loi) {
             hienthi.append("loi goi rmi: " + loi.getMessage() + "\n");
         }
