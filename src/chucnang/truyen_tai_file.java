@@ -5,6 +5,7 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import client_ui.CauHinh;
 
 // lop xu ly truyen tai file nhi phan qua mang (pdf, ppt, excel...)
 public class truyen_tai_file {
@@ -41,7 +42,13 @@ public class truyen_tai_file {
 
     // Ham tu dong tao ten file khong trung lap kieu (1), (2) neu da ton tai trong thu muc download
     public static File lay_file_dich_duy_nhat(String tenfile) {
-        String thu_muc = "src/luutru/download/";
+        String thu_muc = CauHinh.DOWNLOAD_DIR;
+        if (thu_muc == null || thu_muc.isEmpty()) {
+            thu_muc = "src/luutru/download/";
+        }
+        if (!thu_muc.endsWith("/") && !thu_muc.endsWith("\\")) {
+            thu_muc += "/";
+        }
         
         // Tao thu muc neu chua ton tai
         File directory = new File(thu_muc);

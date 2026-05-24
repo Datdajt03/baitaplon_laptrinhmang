@@ -61,6 +61,16 @@ public class client_ui extends javax.swing.JFrame {
         scroll_logs.setBorder(BorderFactory.createEmptyBorder());
         pn_left_logs.add(scroll_logs, BorderLayout.CENTER);
 
+        // Nút Cài đặt toàn hệ thống nằm ở dưới cùng của sidebar (luôn hiển thị trên mọi tab, bao gồm cả RMI)
+        JButton btn_left_settings = new JButton("⚙ Cấu hình hệ thống");
+        btn_left_settings.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        btn_left_settings.setBackground(new Color(220, 225, 240));
+        btn_left_settings.setForeground(new Color(50, 60, 90));
+        btn_left_settings.setFocusPainted(false);
+        btn_left_settings.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
+        btn_left_settings.addActionListener(this::nut_caidatActionPerformed);
+        pn_left_logs.add(btn_left_settings, BorderLayout.SOUTH);
+
         // Đưa thanh Taskbar bên trái vào cửa sổ chính
         getContentPane().add(pn_left_logs, BorderLayout.WEST);
 
@@ -113,6 +123,11 @@ public class client_ui extends javax.swing.JFrame {
         cb_loc_tag = new JComboBox<>(new String[]{"Tất cả tag"});
         cb_loc_tag.addActionListener(e -> apDungBoLocHienTai());
         pn_hienthi_tren.add(cb_loc_tag);
+
+        pn_hienthi_tren.add(new JLabel("  |  "));
+        JButton nut_caidat = new JButton("Cài đặt");
+        nut_caidat.addActionListener(this::nut_caidatActionPerformed);
+        pn_hienthi_tren.add(nut_caidat);
 
         // 6. Tai danh sach tai lieu ngay khi mo
         nut_lammoiActionPerformed(null);
@@ -283,7 +298,12 @@ public class client_ui extends javax.swing.JFrame {
     }//GEN-LAST:event_nut_timkiemActionPerformed
 
     private void nut_tailenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nut_tailenActionPerformed
-        javax.swing.JFileChooser chon_file = new javax.swing.JFileChooser();
+        javax.swing.JFileChooser chon_file;
+        if (CauHinh.UPLOAD_DIR != null && !CauHinh.UPLOAD_DIR.isEmpty()) {
+            chon_file = new javax.swing.JFileChooser(CauHinh.UPLOAD_DIR);
+        } else {
+            chon_file = new javax.swing.JFileChooser();
+        }
         chon_file.setDialogTitle("chọn tài liệu để tải lên");
         if (chon_file.showOpenDialog(this) == javax.swing.JFileChooser.APPROVE_OPTION) {
             java.io.File file_da_chon = chon_file.getSelectedFile();
@@ -682,7 +702,12 @@ public class client_ui extends javax.swing.JFrame {
     }
 
     private void nut_tailen_hienthiActionPerformed(java.awt.event.ActionEvent evt) {
-        javax.swing.JFileChooser chon_file = new javax.swing.JFileChooser();
+        javax.swing.JFileChooser chon_file;
+        if (CauHinh.UPLOAD_DIR != null && !CauHinh.UPLOAD_DIR.isEmpty()) {
+            chon_file = new javax.swing.JFileChooser(CauHinh.UPLOAD_DIR);
+        } else {
+            chon_file = new javax.swing.JFileChooser();
+        }
         chon_file.setDialogTitle("chọn tài liệu để tải lên");
         if (chon_file.showOpenDialog(this) == javax.swing.JFileChooser.APPROVE_OPTION) {
             java.io.File file_da_chon = chon_file.getSelectedFile();
@@ -698,6 +723,105 @@ public class client_ui extends javax.swing.JFrame {
     private void nut_timkiem_hienthiActionPerformed(java.awt.event.ActionEvent evt) {
         chucnang.giao_dien_phu giaodien = new chucnang.giao_dien_phu(hienthi_tailieu);
         giaodien.setVisible(true);
+    }
+
+    private void nut_caidatActionPerformed(java.awt.event.ActionEvent evt) {
+        JDialog dialog = new JDialog(this, "Cấu Hình Đường Dẫn & Kết Nối", true);
+        dialog.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        // Dòng 1: Server IP
+        gbc.gridx = 0; gbc.gridy = 0;
+        dialog.add(new JLabel("Server IP:"), gbc);
+        
+        gbc.gridx = 1;
+        JTextField txtIP = new JTextField(CauHinh.SERVER_IP, 15);
+        dialog.add(txtIP, gbc);
+
+        // Dòng 2: RMI Port
+        gbc.gridx = 0; gbc.gridy = 1;
+        dialog.add(new JLabel("RMI Port:"), gbc);
+
+        gbc.gridx = 1;
+        JTextField txtPort = new JTextField(String.valueOf(CauHinh.RMI_PORT), 15);
+        dialog.add(txtPort, gbc);
+
+        // Dòng 3: Upload folder
+        gbc.gridx = 0; gbc.gridy = 2;
+        dialog.add(new JLabel("Thư mục Upload:"), gbc);
+
+        gbc.gridx = 1;
+        JPanel pnUpload = new JPanel(new BorderLayout(5, 0));
+        JTextField txtUpload = new JTextField(CauHinh.UPLOAD_DIR, 20);
+        JButton btnBrowseUpload = new JButton("Chọn...");
+        btnBrowseUpload.addActionListener(e -> {
+            JFileChooser chooser = new JFileChooser();
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            if (chooser.showOpenDialog(dialog) == JFileChooser.APPROVE_OPTION) {
+                txtUpload.setText(chooser.getSelectedFile().getAbsolutePath());
+            }
+        });
+        pnUpload.add(txtUpload, BorderLayout.CENTER);
+        pnUpload.add(btnBrowseUpload, BorderLayout.EAST);
+        dialog.add(pnUpload, gbc);
+
+        // Dòng 4: Download folder
+        gbc.gridx = 0; gbc.gridy = 3;
+        dialog.add(new JLabel("Thư mục Download:"), gbc);
+
+        gbc.gridx = 1;
+        JPanel pnDownload = new JPanel(new BorderLayout(5, 0));
+        JTextField txtDownload = new JTextField(CauHinh.DOWNLOAD_DIR, 20);
+        JButton btnBrowseDownload = new JButton("Chọn...");
+        btnBrowseDownload.addActionListener(e -> {
+            JFileChooser chooser = new JFileChooser();
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            if (chooser.showOpenDialog(dialog) == JFileChooser.APPROVE_OPTION) {
+                txtDownload.setText(chooser.getSelectedFile().getAbsolutePath());
+            }
+        });
+        pnDownload.add(txtDownload, BorderLayout.CENTER);
+        pnDownload.add(btnBrowseDownload, BorderLayout.EAST);
+        dialog.add(pnDownload, gbc);
+
+        // Dòng 5: Nút bấm Lưu và Hủy
+        gbc.gridx = 0; gbc.gridy = 4; gbc.gridwidth = 2;
+        JPanel pnButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton btnSave = new JButton("Lưu cấu hình");
+        JButton btnCancel = new JButton("Hủy");
+        
+        btnSave.addActionListener(e -> {
+            try {
+                int port = Integer.parseInt(txtPort.getText().trim());
+                CauHinh.RMI_PORT = port;
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(dialog, "Cổng RMI không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            CauHinh.SERVER_IP = txtIP.getText().trim();
+            CauHinh.UPLOAD_DIR = txtUpload.getText().trim();
+            CauHinh.DOWNLOAD_DIR = txtDownload.getText().trim();
+            
+            CauHinh.saveConfig();
+            
+            JOptionPane.showMessageDialog(dialog, "Đã lưu cấu hình thành công!", "Thông Báo", JOptionPane.INFORMATION_MESSAGE);
+            dialog.dispose();
+            
+            client_ui.them_hoat_dong("Đã cập nhật cấu hình: Server=" + CauHinh.SERVER_IP + ", Port=" + CauHinh.RMI_PORT + ", Upload=" + CauHinh.UPLOAD_DIR + ", Download=" + CauHinh.DOWNLOAD_DIR);
+        });
+        
+        btnCancel.addActionListener(e -> dialog.dispose());
+        
+        pnButtons.add(btnSave);
+        pnButtons.add(btnCancel);
+        dialog.add(pnButtons, gbc);
+
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
     }
 
     public static void main(String args[]) {
